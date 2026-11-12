@@ -305,8 +305,16 @@ function setupCarteHoverLoupe() {
 
   let activeRow = null
 
+  // On mobile view or touch devices, never display the hover loupe preview
+  const isMobileView = () => window.innerWidth <= 900 || window.matchMedia('(hover: none)').matches
+
   document.querySelectorAll('.authentic-menu-row').forEach((row) => {
     row.addEventListener('mouseenter', (e) => {
+      if (isMobileView()) {
+        loupe.classList.remove('is-visible')
+        return
+      }
+
       activeRow = row
       const img = row.dataset.dishImage
       const title = row.dataset.dishName
@@ -323,6 +331,10 @@ function setupCarteHoverLoupe() {
     })
 
     row.addEventListener('mousemove', (e) => {
+      if (isMobileView()) {
+        loupe.classList.remove('is-visible')
+        return
+      }
       if (activeRow === row) {
         positionLoupe(e)
       }
@@ -335,8 +347,10 @@ function setupCarteHoverLoupe() {
   })
 
   function positionLoupe(e) {
-    // Only display on screens wider than 1024px
-    if (window.innerWidth < 1024) return
+    if (isMobileView()) {
+      loupe.classList.remove('is-visible')
+      return
+    }
     const x = e.clientX + 25
     const y = e.clientY - 60
     loupe.style.transform = `translate3d(${x}px, ${y}px, 0)`
