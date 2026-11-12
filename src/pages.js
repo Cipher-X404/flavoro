@@ -18,135 +18,29 @@ const marquee = (text = 'FIRE · FLAVOR · PEOPLE · PASSION ·') => `<div class
 
 function home() {
   return `${header('Home')}<main id="main-content">
-  <section class="home-hero" data-parallax aria-label="Hero section">
+  <section class="home-hero" data-parallax aria-label="Welcome to Flavoro">
     <video class="hero-bg" autoplay loop muted playsinline webkit-playsinline preload="auto" poster="${img.hero}">
       <source src="${img.heroVideo}" type="video/mp4">
-      <img class="hero-bg" src="${img.hero}" alt="Flavoro open fire culinary craft">
     </video>
-    <div class="hero-vignette"></div>
-    <div class="hero-grain"></div>
-    <div class="hero-ambient-glow" aria-hidden="true"></div>
-
-    <!-- Editorial Architectural HUD (Top telemetry bar) -->
-    <div class="hero-status-hud container">
-      <div class="hero-hud-pill">
-        <span class="hud-live-dot" aria-hidden="true"></span>
-        <span class="hud-tag">HEARTH LIVE</span>
-        <span class="hud-divider">·</span>
-        <span class="hud-val">NATIVE COALS 420°C</span>
-      </div>
-      <div class="hero-hud-center">
-        <span class="hud-terroir"><i data-lucide="compass"></i> 6.1550° N, 6.7860° E · ONITSHA</span>
-      </div>
-      <div class="hero-hud-pill hero-hud-service">
-        <i data-lucide="clock-3"></i>
-        <span>EVENING SERVICE: 5:30 PM — LATE</span>
+    <div class="hero-vignette" aria-hidden="true"></div>
+    <div class="hero-grain" aria-hidden="true"></div>
+    <div class="hero-frame" aria-hidden="true"></div>
+    <svg class="hero-flourish" viewBox="0 0 460 190" fill="none" aria-hidden="true"><path d="M3 145C85 185 146 178 211 128S331 35 457 48"/><path d="M413 27l44 21-36 31"/></svg>
+    <div class="hero-editorial">
+      <div class="hero-overline"><span class="hero-spark">✳</span> A LITTLE TASTE OF THE EXTRAORDINARY</div>
+      <h1 class="hero-title"><span>Come hungry.</span><span>Leave <em>happy.</em></span></h1>
+      <div class="hero-bottom-copy">
+        <p>Good food. Good people.<br>Moments worth savoring.</p>
+        <a class="hero-discover" href="/pages/menu.html"><span>Discover the menu</span><span class="hero-arrow" aria-hidden="true">↗</span></a>
       </div>
     </div>
-
-    <!-- Spatial Main Canvas: Asymmetric Editorial Layout -->
-    <div class="container hero-spatial-canvas">
-      <!-- Primary Core Editorial -->
-      <div class="hero-core-editorial">
-        <div class="hero-kicker-strip">
-          <span class="hero-kicker-num">№ 01</span>
-          <span class="hero-kicker-rule" aria-hidden="true"></span>
-          <span class="script-line hero-kicker">Food is fire, memory & soul</span>
-        </div>
-
-        <h1 class="split-title hero-monolith-title">
-          <span class="monolith-line-1">POETRY OF <span class="hollow-word">FLAME</span></span>
-          <span class="monolith-line-2"><em>& Ancestral</em> CHAR</span>
-        </h1>
-
-        <p class="hero-manifesto">
-          An unhurried sanctuary where indigenous hardwoods, wild day-boat catches, and highland botanicals collide across glowing hearthstones. Cooked with instinct, served with radical warmth.
-        </p>
-
-        <div class="hero-actions hero-action-suite">
-          <a class="button button-primary magnetic hero-cta-btn" href="/pages/menu.html">
-            <i data-lucide="utensils-crossed"></i>
-            <span>Explore The Living Carte</span>
-          </a>
-          <a class="button button-ghost magnetic hero-reserve-btn" href="/pages/reservations.html">
-            <i data-lucide="calendar-days"></i>
-            <span>Reserve Table Experience</span>
-          </a>
-          <div class="hero-availability-cue">
-            <span class="avail-pip"></span>
-            <span>Tonight: Limited Counter & Salon Available</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column: Interactive Sensory Dossier Cards -->
-      <div class="hero-sensory-dossier" aria-label="Restaurant sensory highlights">
-        <div class="sensory-dossier-head">
-          <span class="dossier-label">SENSORY PILLARS</span>
-          <span class="dossier-count">ACTS I — III</span>
-        </div>
-
-        <div class="sensory-cards-stack">
-          <!-- Pillar I -->
-          <a href="#signatures" class="sensory-card magnetic">
-            <div class="sensory-card-idx">ACT I</div>
-            <div class="sensory-card-main">
-              <h4>Live Fireplace Hearth</h4>
-              <p>Wild cherrywood & mahogany embers. Zero industrial gas.</p>
-            </div>
-            <div class="sensory-card-action">
-              <i data-lucide="arrow-up-right"></i>
-            </div>
-          </a>
-
-          <!-- Pillar II -->
-          <a href="#spaces" class="sensory-card magnetic">
-            <div class="sensory-card-idx">ACT II</div>
-            <div class="sensory-card-main">
-              <h4>Three Dining Atmospheres</h4>
-              <p>The Hearth Counter, Velvet Salon & Garden Terrace.</p>
-            </div>
-            <div class="sensory-card-action">
-              <i data-lucide="arrow-up-right"></i>
-            </div>
-          </a>
-
-          <!-- Pillar III -->
-          <a href="#reviews" class="sensory-card magnetic">
-            <div class="sensory-card-idx">ACT III</div>
-            <div class="sensory-card-main">
-              <h4>Critical Acclaim</h4>
-              <p>Michelin Selected Guide 2025 · 4.9★ from 1,200+ guests.</p>
-            </div>
-            <div class="sensory-card-action">
-              <i data-lucide="arrow-up-right"></i>
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Editorial Bottom Dock Bar -->
-    <div class="hero-dock-bar container">
-      <div class="dock-curation">
-        <span class="dock-badge"><i data-lucide="flame"></i> TODAY’S HEARTH PASS</span>
-        <p class="dock-text">Line-Caught Atlantic Red Snapper in charred banana leaves, Jos wild chanterelles & cold-pressed black truffle essence.</p>
-      </div>
-      <div class="dock-portal-wrap">
-        <a href="#spaces" class="hero-scroll-portal magnetic" aria-label="Descend to dining atmospheres">
-          <span class="portal-lbl">DESCEND</span>
-          <div class="portal-indicator" aria-hidden="true">
-            <span class="portal-hairline"></span>
-            <i data-lucide="chevron-down"></i>
-          </div>
-        </a>
-      </div>
-    </div>
+    <div class="hero-seal" aria-hidden="true"><span>MADE WITH SOUL · SERVED WITH JOY ·</span><b>✳</b></div>
+    <div class="hero-footer-line"><span>FLAVORO RESTAURANT</span><a href="#home-story">SCROLL TO EXPLORE <span>↓</span></a><span>FOOD FOR THE SOUL&nbsp; ✳</span></div>
   </section>
   ${marquee()}
 
   <!-- Section 1: Intro / Story Preview -->
-  <section class="intro-section section-pad"><div class="container intro-grid">
+  <section id="home-story" class="intro-section section-pad"><div class="container intro-grid">
     <div class="intro-copy">${sectionHead('About us', 'We serve <em>happiness.</em>', 'At Flavoro, food is more than a meal. It is fire, memory, generosity and the joy of being together.')}
       <p class="reveal">We source with care, cook with instinct and welcome every guest as an old friend. Every plate carries a little surprise and a lot of soul.</p><a class="text-link reveal" href="/pages/about.html">Learn our story <i data-lucide="arrow-right"></i></a>
     </div>

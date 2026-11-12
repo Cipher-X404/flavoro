@@ -1,12 +1,3 @@
-/**
- * Flavoro Signature Preloader & Kinetic Culinary Text Sequence
- * - Fullscreen minimalist monochrome canvas + DOM layout
- * - High-speed kinetic culinary text sequence centered in viewport
- * - Bottom-left thin progress bar tracking asset readiness
- * - Bottom-right vertical looping "loading" status indicator
- * - Unique Radiant Culinary Hearth Star (Ember Spark) canvas expansion reveal
- */
-
 import { gsap } from 'gsap'
 
 export const FLAVORO_WORDS = [
@@ -32,318 +23,74 @@ export const FLAVORO_WORDS = [
   'savor',
 ]
 
-/**
- * Draws the unique Radiant Culinary Hearth Star (Ember Spark) emblem on canvas
- */
-function drawHearthStar(ctx, cx, cy, size, lineWidth) {
-  const n = size
-  const ctrl = n * 0.16
-  const diagSize = n * 0.52
-  const diagCtrl = diagSize * 0.16
-
-  ctx.save()
-  ctx.fillStyle = '#12100e'
-  ctx.strokeStyle = '#12100e'
-  ctx.lineWidth = Math.max(lineWidth / 2, 2)
-  ctx.lineJoin = 'miter'
-  ctx.lineCap = 'round'
-
-  // 1. Diagonal radiant sparks (ember flare points at 45 deg)
-  const dX = diagSize * Math.SQRT1_2
-  const dY = diagSize * Math.SQRT1_2
-  const cX = diagCtrl * Math.SQRT1_2
-  const cY = diagCtrl * Math.SQRT1_2
-
-  ctx.beginPath()
-  ctx.moveTo(cx + dX, cy - dY)
-  ctx.quadraticCurveTo(cx + cX, cy, cx + dX, cy + dY)
-  ctx.quadraticCurveTo(cx, cy + cY, cx - dX, cy + dY)
-  ctx.quadraticCurveTo(cx - cX, cy, cx - dX, cy - dY)
-  ctx.quadraticCurveTo(cx, cy - cY, cx + dX, cy - dY)
-  ctx.closePath()
-  ctx.fill()
-  ctx.stroke()
-
-  // 2. Primary 4-pointed cardinal flame star (North, East, South, West)
-  ctx.beginPath()
-  ctx.moveTo(cx, cy - n)
-  ctx.quadraticCurveTo(cx + ctrl, cy - ctrl, cx + n, cy)
-  ctx.quadraticCurveTo(cx + ctrl, cy + ctrl, cx, cy + n)
-  ctx.quadraticCurveTo(cx - ctrl, cy + ctrl, cx - n, cy)
-  ctx.quadraticCurveTo(cx - ctrl, cy - ctrl, cx, cy - n)
-  ctx.closePath()
-  ctx.fill()
-  ctx.stroke()
-
-  // 3. Central glowing hearth core (small circular eye)
-  ctx.beginPath()
-  ctx.arc(cx, cy, Math.max(n * 0.1, 3), 0, Math.PI * 2)
-  ctx.fill()
-
-  ctx.restore()
-}
-
-export function initPreloader(options = {}) {
-  const {
-    words = FLAVORO_WORDS,
-    minDuration = 1800,
-    maxDuration = 4000,
-    onReveal = null,
-    onComplete = null,
-  } = options
-
-  // Clean up any existing instance
-  const existing = document.getElementById('flavoro-preloader')
-  if (existing) existing.remove()
-
-  const html = `
+// A hand-drawn cloche: stroke-dash animation keeps the illustration crisp at every size.
+export function initPreloader({ words = FLAVORO_WORDS, minDuration = 1800, maxDuration = 4000, onReveal, onComplete } = {}) {
+  document.getElementById('flavoro-preloader')?.remove()
+  document.body.insertAdjacentHTML('afterbegin', `
     <div class="flavoro-preloader" id="flavoro-preloader" aria-hidden="true">
-      <div class="loader-canvas-wrap">
-        <canvas class="loader-canvas"></canvas>
-      </div>
-      <div class="loader-ui">
-        <div class="loader-bar js-stagger">
-          <div class="loader-bar-progress js-progress"></div>
-        </div>
-        <span class="loader-loading js-stagger">
-          <span class="loader-loading-text js-loop">loading</span>
-        </span>
-      </div>
-      <div class="loader-type js-type">
-        <div class="loader-type-inner">
-          <span class="loader-words js-words">${words[0] || 'flavor'}</span>
-        </div>
-      </div>
-    </div>
-  `
-
-  document.body.insertAdjacentHTML('afterbegin', html)
-
+      <div class="loader-ui"><div class="loader-bar js-stagger"><div class="loader-bar-progress js-progress"></div></div><span class="loader-loading js-stagger"><span class="loader-loading-text js-loop">loading</span></span></div>
+      <div class="loader-type js-type"><div class="loader-type-inner"><span class="loader-words js-words"></span></div></div>
+      <svg class="loader-cloche" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+        <g class="loader-drawing" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M80 365C86 263 160 207 256 207s170 56 176 158" />
+          <path d="M56 379h400c-5 21-22 29-45 29H101c-23 0-40-8-45-29Z" />
+          <path d="M142 433h228l-14 24H156z" />
+          <path d="M225 207c2-23 14-36 31-36s29 13 31 36" />
+          <path d="M163 173c22-20 25-33 4-45-21-13-19-28 3-48" />
+          <path d="M256 150c22-20 25-33 4-45-21-13-19-28 3-48" />
+          <path d="M349 173c22-20 25-33 4-45-21-13-19-28 3-48" />
+        </g>
+      </svg>
+    </div>`)
   const root = document.getElementById('flavoro-preloader')
-  const canvas = root.querySelector('.loader-canvas')
-  const ctx = canvas.getContext('2d')
-  const progressEl = root.querySelector('.js-progress')
-  const typeEl = root.querySelector('.js-type')
-  const wordsEl = root.querySelector('.js-words')
-  const staggerEls = root.querySelectorAll('.js-stagger')
-  const loopEl = root.querySelector('.js-loop')
-
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  const isDesktop = window.innerWidth >= 768
-  const baseSize = isDesktop ? 160 : 80
-  const baseLineWidth = isDesktop ? 225 : 112
-
-  const vars = {
-    size: baseSize,
-    lineWidth: baseLineWidth,
-  }
-
-  const tween = {
-    size: baseSize,
-    lineWidth: baseLineWidth,
-    logoAlpha: 1, // 1 = white mask covers emblem, 0 = emblem fully revealed
-  }
-
-  let rafId = null
-  let globalProgress = 0
-  let currentProgress = 0
-  let loadedProgress = 0
-  let isOutroStarted = false
-  let isDestroyed = false
-
-  function resizeCanvas() {
-    if (isDestroyed) return
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const w = window.innerWidth
-    const h = window.innerHeight
-    canvas.width = w * dpr
-    canvas.height = h * dpr
-    canvas.style.position = 'absolute'
-    canvas.style.top = '0'
-    canvas.style.left = '0'
-    canvas.style.width = `${w}px`
-    canvas.style.height = `${h}px`
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.scale(dpr, dpr)
-  }
-
-  resizeCanvas()
-  window.addEventListener('resize', resizeCanvas, { passive: true })
-
-  // Infinite sliding loop for bottom-right "loading" text
-  const loopTl = gsap.timeline({ repeat: -1, paused: prefersReducedMotion })
-  loopTl
-    .to(loopEl, { yPercent: -105, duration: 0.65, ease: 'power2.inOut' }, 1)
-    .set(loopEl, { yPercent: 105 })
-    .to(loopEl, { yPercent: 0, duration: 0.65, ease: 'power2.out' }, 2.5)
-
-  // RAF loop: updates text sequence and canvas graphic
-  function updateFrame() {
-    if (isDestroyed) return
-
-    const w = window.innerWidth
-    const h = window.innerHeight
-
-    ctx.clearRect(0, 0, w, h)
-
-    // Draw the unique Radiant Culinary Hearth Star in center
-    const cx = w / 2
-    const cy = h / 2
-    drawHearthStar(ctx, cx, cy, tween.size, tween.lineWidth)
-
-    // White cover mask (fades out during outro to reveal hearth emblem)
-    if (tween.logoAlpha > 0.001) {
-      ctx.save()
-      ctx.globalAlpha = tween.logoAlpha
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, w, h)
-      ctx.restore()
+  const progress = root.querySelector('.js-progress')
+  const word = root.querySelector('.js-words')
+  const paths = [...root.querySelectorAll('.loader-drawing path')]
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  paths.forEach(path => { const length = path.getTotalLength(); gsap.set(path, { strokeDasharray: length, strokeDashoffset: length }) })
+  word.textContent = words[0] || 'flavor'
+  const intro = gsap.timeline().to(root.querySelectorAll('.js-stagger'), { autoAlpha: 1, duration: .4, stagger: .1 }).to(root.querySelector('.js-type'), { autoAlpha: 1, duration: .4 }, 0.15)
+  const loop = gsap.timeline({ repeat: -1, paused: reduced }).to(root.querySelector('.js-loop'), { yPercent: -105, duration: .65 }, 1).set(root.querySelector('.js-loop'), { yPercent: 105 }).to(root.querySelector('.js-loop'), { yPercent: 0, duration: .65 }, 2.5)
+  let raf, outro, destroyed = false, started = false, current = 0, loaded = 0
+  const start = performance.now()
+  function update() {
+    if (destroyed) return
+    if (!started) {
+      const elapsed = performance.now() - start
+      const images = [...document.querySelectorAll('img')].slice(0, 8)
+      const ratio = images.length ? images.filter(img => img.complete).length / images.length : 1
+      loaded = elapsed >= maxDuration || (elapsed >= minDuration && (document.readyState === 'complete' || ratio >= .8)) ? 1 : Math.min(elapsed / minDuration * .75 + ratio * .25, .96)
+      current = Math.min(loaded, current + .015)
+      progress.style.transform = `scaleX(${current})`
+      word.textContent = words[Math.floor(elapsed / 95) % words.length] || 'flavor'
+      if (current >= .99 && loaded === 1) triggerOutro()
     }
-
-    // Advance word sequence progress
-    if (!isOutroStarted) {
-      globalProgress += 0.008
-      if (globalProgress >= 1) globalProgress = 0
-
-      const wordIdx = Math.floor(globalProgress * (words.length - 1))
-      const word = words[wordIdx] || words[0]
-      if (wordsEl.textContent !== word) {
-        wordsEl.textContent = word
-      }
-
-      // Smooth progress bar update
-      if (currentProgress < loadedProgress) {
-        currentProgress += 0.015
-        if (currentProgress > loadedProgress) currentProgress = loadedProgress
-      }
-
-      progressEl.style.transform = `scaleX(${currentProgress})`
-
-      // If load is complete and bar reached 100%, trigger outro
-      if (currentProgress >= 0.99 && loadedProgress >= 1) {
-        triggerOutro()
-      }
-    }
-
-    rafId = requestAnimationFrame(updateFrame)
+    raf = requestAnimationFrame(update)
   }
-
-  rafId = requestAnimationFrame(updateFrame)
-
-  // In animation (stagger in bar and loading, fade in center word)
-  gsap.timeline()
-    .to(staggerEls, { autoAlpha: 1, duration: 0.4, ease: 'none', stagger: 0.1 }, 0)
-    .to(typeEl, { autoAlpha: 1, duration: 0.4, ease: 'none' }, 0.15)
-
-  // Track readiness
-  const startTime = performance.now()
-
-  function evaluateReadiness() {
-    const elapsed = performance.now() - startTime
-    const timeProgress = Math.min(elapsed / minDuration, 1)
-
-    const images = Array.from(document.querySelectorAll('img')).slice(0, 8)
-    const loadedImages = images.filter(img => img.complete).length
-    const imgRatio = images.length ? loadedImages / images.length : 1
-
-    if (timeProgress >= 1 && (document.readyState === 'complete' || imgRatio >= 0.8)) {
-      loadedProgress = 1
-    } else {
-      loadedProgress = Math.min(timeProgress * 0.75 + imgRatio * 0.25, 0.96)
-    }
-  }
-
-  const checkInterval = setInterval(evaluateReadiness, 50)
-
-  const timeoutId = setTimeout(() => {
-    loadedProgress = 1
-  }, maxDuration)
-
-  // Outro transition
+  raf = requestAnimationFrame(update)
   function triggerOutro() {
-    if (isOutroStarted || isDestroyed) return
-    isOutroStarted = true
-    clearInterval(checkInterval)
-    clearTimeout(timeoutId)
-
-    const w = window.innerWidth
-    const h = window.innerHeight
-    const maxDim = Math.max(w, h)
-    const scaleFactor = Math.round((maxDim + 120) / vars.size)
-
-    if (prefersReducedMotion) {
-      gsap.to(root, {
-        autoAlpha: 0,
-        duration: 0.4,
-        ease: 'power2.out',
-        onStart: () => onReveal?.(),
-        onComplete: destroy,
-      })
+    if (started || destroyed) return
+    started = true
+    loop.kill()
+    if (reduced) {
+      onReveal?.()
+      outro = gsap.to(root, { autoAlpha: 0, duration: .3, onComplete: destroy })
       return
     }
-
-    const outroTl = gsap.timeline({
-      onComplete: destroy,
-    })
-
-    // 1. Staggered fade out of progress bar and loading text
-    outroTl.to(staggerEls, {
-      autoAlpha: 0,
-      duration: 0.4,
-      ease: 'none',
-      stagger: 0.05,
-    }, 0)
-
-    // 2. Center culinary word fades out
-    outroTl.to(typeEl, {
-      autoAlpha: 0,
-      duration: 0.4,
-      ease: 'none',
-    }, 0.2)
-
-    // 3. Canvas white mask fades out, revealing the unique hearth star
-    outroTl.to(tween, {
-      logoAlpha: 0,
-      duration: 0.4,
-      ease: 'none',
-    }, 0.5)
-
-    // 4. Hearth star massively scales out to blanket the viewport
-    outroTl.to(tween, {
-      size: vars.size * scaleFactor,
-      lineWidth: vars.lineWidth * scaleFactor,
-      duration: 0.65,
-      ease: 'quint.inOut',
-      onStart: () => {
-        onReveal?.()
-      },
-    }, 1.0)
-
-    // 5. Container fades out, unveiling the site
-    outroTl.to(root, {
-      autoAlpha: 0,
-      duration: 0.3,
-      ease: 'none',
-    }, 1.5)
-
-    loopTl.kill()
+    outro = gsap.timeline({ onComplete: destroy })
+      .to([root.querySelector('.js-type'), ...root.querySelectorAll('.js-stagger')], { autoAlpha: 0, duration: .35, stagger: .04 })
+      .to(paths, { strokeDashoffset: 0, duration: 1.05, stagger: .09, ease: 'power2.inOut' }, '-=.05')
+      .to(root.querySelector('.loader-cloche'), { scale: 1.12, duration: .35, ease: 'power2.inOut' }, '-=.1')
+      .call(() => onReveal?.())
+      .to(root, { autoAlpha: 0, duration: .65, ease: 'power2.inOut' })
   }
-
   function destroy() {
-    if (isDestroyed) return
-    isDestroyed = true
-    clearInterval(checkInterval)
-    clearTimeout(timeoutId)
-    if (rafId) cancelAnimationFrame(rafId)
-    window.removeEventListener('resize', resizeCanvas)
-    loopTl.kill()
+    if (destroyed) return
+    destroyed = true
+    cancelAnimationFrame(raf)
+    intro.kill(); loop.kill(); outro?.kill()
     root.remove()
     onComplete?.()
   }
-
-  return {
-    triggerOutro,
-    destroy,
-  }
+  return { triggerOutro, destroy }
 }
