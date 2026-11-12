@@ -12,6 +12,12 @@ const img = {
   salad: '/images/garden-salad.jpg',
   private: '/images/private-dining.jpg',
   portrait: '/images/chef-portrait.jpg',
+  stockDining: '/images/editorial/dining-room.jpg',
+  sharedPasta: '/images/menu/shared-pasta.jpg',
+  breakfastPhoto: '/images/menu/breakfast-eggs.jpg',
+  dessertPhoto: '/images/menu/chocolate-dessert.jpg',
+  cocktailPhoto: '/images/menu/cocktail.jpg',
+  barPhoto: '/images/editorial/bartender.jpg',
 }
 
 const marquee = (text = 'FIRE · FLAVOR · PEOPLE · PASSION ·') => `<div class="marquee" aria-hidden="true"><div>${Array(5).fill(`<span>${text}</span>`).join('')}</div></div>`
@@ -19,545 +25,55 @@ const marquee = (text = 'FIRE · FLAVOR · PEOPLE · PASSION ·') => `<div class
 function home() {
   return `${header('Home')}<main id="main-content">
   <section class="home-hero" data-parallax aria-label="Welcome to Flavoro">
-    <video class="hero-bg" autoplay loop muted playsinline webkit-playsinline preload="auto" poster="${img.hero}">
+    <video class="hero-bg" loop muted playsinline webkit-playsinline preload="metadata" poster="${img.hero}">
       <source src="${img.heroVideo}" type="video/mp4">
     </video>
     <div class="hero-vignette" aria-hidden="true"></div>
     <div class="hero-grain" aria-hidden="true"></div>
     <div class="hero-frame" aria-hidden="true"></div>
-    <svg class="hero-flourish" viewBox="0 0 460 190" fill="none" aria-hidden="true"><path d="M3 145C85 185 146 178 211 128S331 35 457 48"/><path d="M413 27l44 21-36 31"/></svg>
     <div class="hero-editorial">
-      <div class="hero-overline"><span class="hero-spark">✳</span> A LITTLE TASTE OF THE EXTRAORDINARY</div>
-      <h1 class="hero-title"><span>Come hungry.</span><span>Leave <em>happy.</em></span></h1>
+      <div class="hero-overline"><span class="hero-spark">✳</span> A PLACE FOR GOOD THINGS</div>
+      <h1 class="hero-title"><span>Come for</span><span>the <em>flavor.</em></span><span class="hero-title-last">Stay for the feeling.</span></h1>
       <div class="hero-bottom-copy">
-        <p>Good food. Good people.<br>Moments worth savoring.</p>
-        <a class="hero-discover" href="/pages/menu.html"><span>Discover the menu</span><span class="hero-arrow" aria-hidden="true">↗</span></a>
+        <p>Food worth gathering for.<br>Moments worth staying for.</p>
+        <a class="hero-discover" href="/pages/menu.html"><span>Explore the menu</span><span class="hero-arrow" aria-hidden="true">↗</span></a>
       </div>
     </div>
-    <div class="hero-seal" aria-hidden="true"><span>MADE WITH SOUL · SERVED WITH JOY ·</span><b>✳</b></div>
-    <div class="hero-footer-line"><span>FLAVORO RESTAURANT</span><a href="#home-story">SCROLL TO EXPLORE <span>↓</span></a><span>FOOD FOR THE SOUL&nbsp; ✳</span></div>
+    <div class="hero-orbit" aria-hidden="true"><svg class="hero-flourish" viewBox="0 0 180 180" fill="none"><circle cx="90" cy="90" r="78"/><path d="M90 34v112M34 90h112M50 50l80 80M130 50l-80 80"/></svg><span>GOOD FOOD<br>GOOD MOOD</span></div>
+    <button class="hero-video-control" type="button" data-video-toggle aria-label="Pause background video" aria-pressed="false">Ⅱ <span>PAUSE FILM</span></button>
+    <div class="hero-footer-line"><span>FLAVORO &nbsp; / &nbsp; RESTAURANT</span><a href="#home-story">SCROLL TO EXPLORE <span>↓</span></a><span>MADE WITH SOUL &nbsp; ✳</span></div>
   </section>
   ${marquee()}
 
-  <!-- Section 1: Intro / Story Preview -->
-  <section id="home-story" class="intro-section section-pad"><div class="container intro-grid">
-    <div class="intro-copy">${sectionHead('About us', 'We serve <em>happiness.</em>', 'At Flavoro, food is more than a meal. It is fire, memory, generosity and the joy of being together.')}
-      <p class="reveal">We source with care, cook with instinct and welcome every guest as an old friend. Every plate carries a little surprise and a lot of soul.</p><a class="text-link reveal" href="/pages/about.html">Learn our story <i data-lucide="arrow-right"></i></a>
-    </div>
-    <div class="intro-visual reveal-image"><img src="${img.interior}" alt="Flavoro dining room"><div class="experience-card"><b>10+</b><span>Years of<br>experience</span></div></div>
-    <div class="value-grid">${[['leaf','Fresh ingredients'],['chef-hat','Skilled chefs'],['clock-3','Fast & friendly'],['smile','Happy guests']].map(([i,t])=>`<div class="reveal-card"><i data-lucide="${i}"></i><b>${t}</b></div>`).join('')}</div>
+  <section id="home-story" class="table-story section-pad" aria-labelledby="table-story-title"><div class="container table-story-grid">
+    <div class="table-story-copy reveal"><span class="eyebrow">THE FLAVORO FEELING &nbsp; / &nbsp; 01</span><h2 id="table-story-title">A table worth <em>staying for.</em></h2><p>It starts with something delicious. It becomes a moment shared.</p><a class="text-link" href="/pages/about.html">Discover our story <i data-lucide="arrow-up-right"></i></a></div>
+    <div class="table-story-image reveal-image"><img src="${img.interior}" alt="A warmly lit dining space"><span>THE ART OF GATHERING &nbsp; ✳</span></div>
+    <div class="table-story-aside"><span>FOOD / PEOPLE / MOMENTS</span><p>Come as you are.<br>Stay a little longer.</p></div>
   </div></section>
 
-  <!-- Section 2: Dining Atmospheres / Spaces Showcase (NEW) -->
-  <section id="spaces" class="spaces-section section-pad"><div class="container">
-    ${sectionHead('Dining atmospheres', 'Spaces shaped for <em>every mood.</em>', 'Whether you seek the lively theatre of open flames, the gentle hush of candlelit velvet booths, or the breeze of our private salon.')}
-    <div class="spaces-grid">
-      <article class="space-card reveal-card">
-        <div class="space-image">
-          <img src="${img.hero}" alt="The Fire Hearth Counter">
-          <span class="space-tag">Hearthside</span>
-        </div>
-        <div class="space-body">
-          <h3>The Fire Hearth Counter</h3>
-          <p>Front-row counter seating watching our chefs work the live coals. Immersive, energetic, and tailored for curious palates seeking front-row craft.</p>
-          <ul class="space-perks">
-            <li><i data-lucide="flame"></i> Live-fire view</li>
-            <li><i data-lucide="sparkles"></i> Chef interaction</li>
-            <li><i data-lucide="wine"></i> Sommelier pours</li>
-          </ul>
-          <a class="text-link" href="/pages/reservations.html">Reserve Counter <i data-lucide="arrow-right"></i></a>
-        </div>
-      </article>
-      <article class="space-card reveal-card">
-        <div class="space-image">
-          <img src="${img.interior}" alt="The Main Dining Room">
-          <span class="space-tag">Candlelit</span>
-        </div>
-        <div class="space-body">
-          <h3>The Main Dining Salon</h3>
-          <p>Warm aged timber, curved velvet banquettes, and golden acoustic lighting. Designed for lingering over multi-course meals, wine, and laughter.</p>
-          <ul class="space-perks">
-            <li><i data-lucide="users"></i> Booths & tables</li>
-            <li><i data-lucide="heart"></i> Intimate lighting</li>
-            <li><i data-lucide="music"></i> Curated vinyl jazz</li>
-          </ul>
-          <a class="text-link" href="/pages/reservations.html">Reserve Table <i data-lucide="arrow-right"></i></a>
-        </div>
-      </article>
-      <article class="space-card reveal-card">
-        <div class="space-image">
-          <img src="${img.private}" alt="The Garden Salon & Terrace">
-          <span class="space-tag">Secluded</span>
-        </div>
-        <div class="space-body">
-          <h3>The Garden Salon & Terrace</h3>
-          <p>Framed by mature foliage and soft lanterns, this secluded wing hosts milestone celebrations, spirited family toasts, and private feasting.</p>
-          <ul class="space-perks">
-            <li><i data-lucide="leaf"></i> Lush greenery</li>
-            <li><i data-lucide="shield-check"></i> Private service</li>
-            <li><i data-lucide="calendar-days"></i> Up to 28 guests</li>
-          </ul>
-          <a class="text-link" href="/pages/reservations.html">Reserve Salon <i data-lucide="arrow-right"></i></a>
-        </div>
-      </article>
-    </div>
+  <section id="signatures" class="home-selection section-pad" aria-labelledby="selection-heading"><div class="container">
+    <div class="selection-head"><div><span class="selection-kicker">A TASTE OF FLAVORO &nbsp; / &nbsp; 02</span><h2 id="selection-heading">A little something<br><em>for everyone.</em></h2></div><div class="selection-intro"><p>From the first bite to the last, there’s always something worth savoring.</p><a class="selection-link" href="/pages/menu.html">Explore the menu <span>↗</span></a></div></div>
+    <div class="selection-grid">
+      <a class="selection-card reveal-card" href="/pages/menu.html#act-morning"><div class="selection-image"><img src="${img.breakfastPhoto}" alt="Scrambled eggs and toast"><span>01 / MORNING</span><b aria-hidden="true">↗</b></div><div class="selection-caption"><h3>Start beautifully.</h3><p>Something good for the beginning of your day.</p></div></a>
+      <a class="selection-card reveal-card" href="/pages/menu.html#act-midday"><div class="selection-image"><img src="${img.salad}" alt="A colorful plate of greens"><span>02 / MIDDAY</span><b aria-hidden="true">↗</b></div><div class="selection-caption"><h3>Stay for a while.</h3><p>A little time together, made delicious.</p></div></a>
+      <a class="selection-card reveal-card" href="/pages/menu.html#act-confections"><div class="selection-image"><img src="${img.dessertPhoto}" alt="Chocolate dessert on a plate"><span>03 / THE FINALE</span><b aria-hidden="true">↗</b></div><div class="selection-caption"><h3>End on a sweet note.</h3><p>For the moments you wish would linger.</p></div></a>
+    </div><p class="selection-note">A visual introduction. Menu items and prices are illustrative.</p>
   </div></section>
 
-  <!-- Section 3: The Chef's Curated Folio List (Redesigned from cards to Haute Restaurant List) -->
-  <section id="signatures" class="home-menu-folio section-pad">
-    <div class="container">
-      <div class="folio-head-wrap">
-        ${sectionHead('Peak season selection', 'The chef’s signature <em>folio list.</em>', 'A curated preview of dishes defined by native Nigerian firewood smoke, day-boat catches, and ancient wild herbs. Cooked to order for your table.')}
-        <div class="folio-legend">
-          <span><i data-lucide="flame"></i> Woodfire Ember Roasted</span>
-          <span><i data-lucide="leaf"></i> Foraged Botanicals</span>
-          <span><i data-lucide="wine"></i> Sommelier Curated</span>
-        </div>
-      </div>
+  <section id="spaces" class="home-gather section-pad"><div class="container gather-grid"><div class="gather-image reveal-image"><img src="${img.private}" alt="A table set for dining"><span>THE PLEASURE OF SHARING &nbsp; ✳</span></div><div class="gather-copy reveal"><span class="selection-kicker">GOOD COMPANY &nbsp; / &nbsp; 03</span><h2>Make a moment<br><em>of it.</em></h2><p>Some occasions call for a little more time around the table. Discover the inspiration behind gathering at Flavoro.</p><a class="selection-link" href="/pages/private-dining.html">Explore private dining <span>↗</span></a></div></div></section>
 
-      <div class="home-authentic-menu-list">
-        <!-- Item 01 -->
-        <article class="home-menu-row reveal" data-dish-id="wild-mushroom-toast">
-          <div class="home-row-lead">
-            <span class="home-row-num">№ 01</span>
-            <div class="home-row-info">
-              <div class="home-row-title-line">
-                <h3 class="home-dish-name">Jos Foraged Wild Mushroom Toast</h3>
-                <div class="home-diet-wrap"><span class="carte-diet-badge" title="Vegetarian">🌱 Vegetarian</span><span class="carte-diet-badge" title="Chef's Pick">★ Chef's Pick</span></div>
-                <span class="home-leader-dots" aria-hidden="true"></span>
-                <strong class="home-dish-price">$18.00</strong>
-              </div>
-              <p class="home-dish-ingredients">Charred heritage sourdough, whipped chèvre goat curd, pan-seared Jos plateau chanterelles, 63° slow-poached pasture egg, cold-pressed black truffle essence.</p>
-              <div class="home-row-pairing">
-                <i data-lucide="wine"></i> <span><em>Sommelier Pairing:</em> Single-origin Ethiopian cold pour or volcanic Nerello Mascalese</span>
-              </div>
-            </div>
-          </div>
-          <div class="home-row-actions">
-            <a href="/pages/reservations.html?experience=alacarte&item=Wild%20Mushroom%20Toast" class="home-reserve-link" title="Reserve a table for this course">
-              <i data-lucide="calendar-days"></i> <span>Reserve for this Course</span>
-            </a>
-            <a href="/pages/menu.html#order" class="home-order-link" title="Order via Live Hearth Pass">
-              <i data-lucide="plus"></i> <span>Order Dish</span>
-            </a>
-          </div>
-        </article>
+  <section class="home-people section-pad"><div class="container people-grid"><div class="people-copy reveal"><span class="selection-kicker">THE HUMAN TOUCH &nbsp; / &nbsp; 04</span><h2>It’s the people<br>that make it <em>special.</em></h2><p>Good hospitality is made in the details—and in the moments shared across the table.</p><a class="selection-link" href="/pages/people.html">Meet the story <span>↗</span></a></div><div class="people-image reveal-image"><img src="${img.chefs}" alt="Chefs working together in a kitchen"></div></div></section>
 
-        <!-- Item 02 -->
-        <article class="home-menu-row reveal" data-dish-id="market-snapper">
-          <div class="home-row-lead">
-            <span class="home-row-num">№ 02</span>
-            <div class="home-row-info">
-              <div class="home-row-title-line">
-                <h3 class="home-dish-name">Whole Wood-Fired Red Snapper in Banana Leaf</h3>
-                <div class="home-diet-wrap"><span class="carte-diet-badge" title="Gluten-Free">🌾 Gluten-Free</span><span class="carte-diet-badge" title="Live Fire">🔥 Live-Fire</span></div>
-                <span class="home-leader-dots" aria-hidden="true"></span>
-                <strong class="home-dish-price">$32.00</strong>
-              </div>
-              <p class="home-dish-ingredients">Line-caught Atlantic snapper steamed in charred banana leaves over glowing cherrywood coals, coconut lemongrass velouté, pickled mustard seeds, charred sea purslane.</p>
-              <div class="home-row-pairing">
-                <i data-lucide="wine"></i> <span><em>Sommelier Pairing:</em> 2023 Skin-Contact Chenin Blanc or botanical lemongrass shrub</span>
-              </div>
-            </div>
-          </div>
-          <div class="home-row-actions">
-            <a href="/pages/reservations.html?experience=alacarte&item=Charred%20Red%20Snapper" class="home-reserve-link" title="Reserve a table for this course">
-              <i data-lucide="calendar-days"></i> <span>Reserve for this Course</span>
-            </a>
-            <a href="/pages/menu.html#order" class="home-order-link" title="Order via Live Hearth Pass">
-              <i data-lucide="plus"></i> <span>Order Dish</span>
-            </a>
-          </div>
-        </article>
-
-        <!-- Item 03 -->
-        <article class="home-menu-row reveal" data-dish-id="smoked-short-ribs">
-          <div class="home-row-lead">
-            <span class="home-row-num">№ 03</span>
-            <div class="home-row-info">
-              <div class="home-row-title-line">
-                <h3 class="home-dish-name">12-Hour Smoked Beef Short Ribs</h3>
-                <div class="home-diet-wrap"><span class="carte-diet-badge" title="Gluten-Free">🌾 Gluten-Free</span><span class="carte-diet-badge" title="Signature">★ Signature</span></div>
-                <span class="home-leader-dots" aria-hidden="true"></span>
-                <strong class="home-dish-price">$34.00</strong>
-              </div>
-              <p class="home-dish-ingredients">Center-cut prime beef rib smoked over wild cherrywood and aged mahogany embers, black garlic tare glaze, crispy cassava fondant, pickled sea buckthorn, bone marrow emulsion.</p>
-              <div class="home-row-pairing">
-                <i data-lucide="wine"></i> <span><em>Sommelier Pairing:</em> 2018 Aged Bolgheri Superiore or smoked hibiscus peppercorn decoction</span>
-              </div>
-            </div>
-          </div>
-          <div class="home-row-actions">
-            <a href="/pages/reservations.html?experience=alacarte&item=12-Hour%20Smoked%20Beef%20Short%20Ribs" class="home-reserve-link" title="Reserve a table for this course">
-              <i data-lucide="calendar-days"></i> <span>Reserve for this Course</span>
-            </a>
-            <a href="/pages/menu.html#order" class="home-order-link" title="Order via Live Hearth Pass">
-              <i data-lucide="plus"></i> <span>Order Dish</span>
-            </a>
-          </div>
-        </article>
-
-        <!-- Item 04 -->
-        <article class="home-menu-row reveal" data-dish-id="truffle-tagliatelle">
-          <div class="home-row-lead">
-            <span class="home-row-num">№ 04</span>
-            <div class="home-row-info">
-              <div class="home-row-title-line">
-                <h3 class="home-dish-name">Black Truffle Alfredo Fresh Tagliolini</h3>
-                <div class="home-diet-wrap"><span class="carte-diet-badge" title="Vegetarian">🌱 Vegetarian</span></div>
-                <span class="home-leader-dots" aria-hidden="true"></span>
-                <strong class="home-dish-price">$24.00</strong>
-              </div>
-              <p class="home-dish-ingredients">Hand-extruded golden egg pasta, 36-month aged Parmigiano-Reggiano, Normandy cultured butter, cracked tellicherry black pepper, fresh shaved seasonal truffles.</p>
-              <div class="home-row-pairing">
-                <i data-lucide="wine"></i> <span><em>Sommelier Pairing:</em> Premier Cru Meursault 2020 or roasted oolong vanilla infusion</span>
-              </div>
-            </div>
-          </div>
-          <div class="home-row-actions">
-            <a href="/pages/reservations.html?experience=alacarte&item=Truffle%20Alfredo%20Tagliolini" class="home-reserve-link" title="Reserve a table for this course">
-              <i data-lucide="calendar-days"></i> <span>Reserve for this Course</span>
-            </a>
-            <a href="/pages/menu.html#order" class="home-order-link" title="Order via Live Hearth Pass">
-              <i data-lucide="plus"></i> <span>Order Dish</span>
-            </a>
-          </div>
-        </article>
-
-        <!-- Item 05 -->
-        <article class="home-menu-row reveal" data-dish-id="chocolate-fondant">
-          <div class="home-row-lead">
-            <span class="home-row-num">№ 05</span>
-            <div class="home-row-info">
-              <div class="home-row-title-line">
-                <h3 class="home-dish-name">Midnight Dark Chocolate Ember Fondant</h3>
-                <div class="home-diet-wrap"><span class="carte-diet-badge" title="Vegetarian">🌱 Vegetarian</span></div>
-                <span class="home-leader-dots" aria-hidden="true"></span>
-                <strong class="home-dish-price">$16.00</strong>
-              </div>
-              <p class="home-dish-ingredients">70% single-origin Venezuelan dark chocolate molten cake roasted directly on coals, house-churned Kentucky bourbon gelato, smoked fleur de sel, dark cacao nib crunch.</p>
-              <div class="home-row-pairing">
-                <i data-lucide="wine"></i> <span><em>Sommelier Pairing:</em> 20-Year Tawny Port or Hearthside Smoked Old Fashioned</span>
-              </div>
-            </div>
-          </div>
-          <div class="home-row-actions">
-            <a href="/pages/reservations.html?experience=alacarte&item=Midnight%20Dark%20Chocolate%20Fondant" class="home-reserve-link" title="Reserve a table for this course">
-              <i data-lucide="calendar-days"></i> <span>Reserve for this Course</span>
-            </a>
-            <a href="/pages/menu.html#order" class="home-order-link" title="Order via Live Hearth Pass">
-              <i data-lucide="plus"></i> <span>Order Dish</span>
-            </a>
-          </div>
-        </article>
-      </div>
-
-      <!-- Folio Footer with Direct Actions -->
-      <div class="home-folio-footer">
-        <div class="folio-footer-note">
-          <i data-lucide="sparkle"></i>
-          <span>Looking to curate your entire meal? Every dish can be customized by ingredient (removing what you don’t want & adding premium extras).</span>
-        </div>
-        <div class="folio-footer-cta">
-          <a class="button button-primary magnetic" href="/pages/menu.html"><i data-lucide="book-open"></i> View Full 16-Dish Carte</a>
-          <a class="button button-dark magnetic" href="/pages/menu.html#order"><i data-lucide="flame"></i> Open Live Hearth Pass</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 4: Provenance & Artisan Craft (NEW) -->
-  <section id="provenance" class="provenance-section section-pad"><div class="container provenance-grid">
-    <div class="provenance-visual reveal-image">
-      <img src="${img.salad}" alt="Fresh garden harvest and herbs">
-      <div class="provenance-badge">
-        <i data-lucide="compass"></i>
-        <span>100% Traceable & Organic Sourcing</span>
-      </div>
-    </div>
-    <div>
-      ${sectionHead('Farm, sea & ember', 'Grounded in nature, <em>elevated by flame.</em>', 'Every morning begins before dawn with crates from small-scale growers, wild coastal divers, and heritage grain farmers.')}
-      <p class="reveal" style="color:#d7d0c7;margin:-20px 0 25px;font-size:16.5px;line-height:1.65;">We believe true luxury is knowing where each seed sprouted, how the fish was caught, and whose hands milled the grain. Our cooking is the honest translation of this land.</p>
-      <div class="provenance-pillars">
-        <div class="pillar-card reveal-card">
-          <i data-lucide="leaf"></i>
-          <h4>Daily Harvest</h4>
-          <p>Organically grown greens and heirloom vegetables picked within 24 hours.</p>
-        </div>
-        <div class="pillar-card reveal-card">
-          <i data-lucide="shield-check"></i>
-          <h4>Line-Caught Seafood</h4>
-          <p>Sustainable day-boat catches with zero destructive industrial trawling.</p>
-        </div>
-        <div class="pillar-card reveal-card">
-          <i data-lucide="flame"></i>
-          <h4>Native Hardwood</h4>
-          <p>Locally salvaged oak and fruitwoods create clean smoke without gas.</p>
-        </div>
-        <div class="pillar-card reveal-card">
-          <i data-lucide="sparkles"></i>
-          <h4>House Ferments</h4>
-          <p>48-hour sourdoughs, wild vinegars, and aged hot ferments made in-house.</p>
-        </div>
-      </div>
-    </div>
-  </div></section>
-
-  <!-- Section 5: Why Flavoro (Numbered Features) -->
-  <section class="dark-feature section-pad"><div class="container dark-feature-grid"><div class="sticky-copy">${sectionHead('Why Flavoro', 'A dining room with a pulse.', 'Every night unfolds differently—guided by season, sound, flame and the people around your table.')}<a class="button button-primary" href="/pages/reservations.html">Reserve tonight</a></div><div class="feature-list">${[['01','Honest sourcing','We know our growers, makers and fishermen by name.'],['02','Live-fire craft','Smoke, char and patience bring every ingredient into focus.'],['03','Warm service','Attentive without theatre. Personal without pretence.'],['04','Beautiful rhythm','Lighting, music and service move together all evening.']].map(x=>`<article class="feature-row reveal"><span>${x[0]}</span><div><h3>${x[1]}</h3><p>${x[2]}</p></div><i data-lucide="arrow-up-right"></i></article>`).join('')}</div></div></section>
-
-  <!-- Section 6: Meet Chef Amara -->
-  <section class="chef-feature section-pad"><div class="container split-section"><div class="reveal-image"><img src="${img.portrait}" alt="Flavoro executive chef"></div><div>${sectionHead('Meet the team', 'Made by people who care.', 'Our chefs blend technical precision with the kind of generosity that cannot be taught.')}<div class="quote"><i data-lucide="quote"></i><p>“Great cooking begins with respect—for the ingredient, for the craft, and for the guest.”</p><span>— Chef Amara Cole</span></div><a class="text-link" href="/pages/about.html#chefs">Meet our chefs <i data-lucide="arrow-right"></i></a></div></div></section>
-
-  <!-- Section 7: Guest Reviews & Critical Acclaim (Redesigned as an Editorial Press Dossier) -->
-  <section id="reviews" class="reviews-section section-pad"><div class="container">
-    <div class="accolades-strip reveal">
-      <div class="accolade-item">
-        <i data-lucide="award"></i>
-        <div><b>Michelin Selected</b><span>Guide 2025</span></div>
-      </div>
-      <div class="accolade-item">
-        <i data-lucide="star"></i>
-        <div><b>4.9 / 5.0 Rating</b><span>Over 1,200 Verified Reviews</span></div>
-      </div>
-      <div class="accolade-item">
-        <i data-lucide="sparkle"></i>
-        <div><b>African Gourmet Award</b><span>Best Hearth Dining 2024</span></div>
-      </div>
-      <div class="accolade-item">
-        <i data-lucide="wine"></i>
-        <div><b>Wine Spectator</b><span>Excellence Award 2025</span></div>
-      </div>
-    </div>
-
-    ${sectionHead('Impressions', 'Praised by <em>palates & press.</em>', 'Here is what international critics, food scholars, and regular guests record in our dining room guestbook.')}
-
-    <!-- Editorial Critic's Dossier (Generous line lengths, balanced text containers) -->
-    <div class="critic-dossier-wrap">
-      <!-- Lead Critical Review Banner -->
-      <article class="critic-lead-card reveal">
-        <div class="critic-lead-header">
-          <div class="critic-badge-group">
-            <span class="critic-verified-pill"><i data-lucide="award"></i> Lead Critical Review</span>
-            <div class="review-stars">${Array(5).fill('<i data-lucide="star"></i>').join('')}</div>
-          </div>
-          <span class="critic-season">Autumn Dining Review · Published Oct 2024</span>
-        </div>
-        <blockquote class="critic-lead-quote">
-          “An extraordinary triumph of fire, heritage, and restraint. The red snapper in coconut lime broth might be the most memorable dish cooked anywhere this year. Chef Amara has turned the live-fire hearth into an art of deep emotional resonance.”
-        </blockquote>
-        <div class="reviewer-signature">
-          <div class="reviewer-avatar">TC</div>
-          <div class="reviewer-info">
-            <b>Tara Chambers</b>
-            <span>Chief Dining Critic · Gourmet West Africa</span>
-          </div>
-          <div class="reviewer-pairing-callout">
-            <i data-lucide="wine"></i> <span>Tasted with: Skin-Contact Chenin Blanc & 7-Course Journey</span>
-          </div>
-        </div>
-      </article>
-
-      <!-- Secondary Review Ledger -->
-      <div class="critic-secondary-grid">
-        <article class="critic-sub-card reveal">
-          <div class="review-stars">${Array(5).fill('<i data-lucide="star"></i>').join('')}</div>
-          <blockquote>“We celebrated our 10th anniversary at the Hearth Counter. From the warm brioche to the final chocolate fondant, every second felt magical, unhurried, and deeply soul-warming.”</blockquote>
-          <div class="reviewer">
-            <div class="reviewer-avatar">EO</div>
-            <div class="reviewer-info">
-              <b>Emeka & Sarah O.</b>
-              <span>Regular Guests · Hearth Counter Seating</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="critic-sub-card reveal">
-          <div class="review-stars">${Array(5).fill('<i data-lucide="star"></i>').join('')}</div>
-          <blockquote>“Rarely do atmosphere, acoustic warmth, wine pairing, and hospitality align so effortlessly. Flavoro is redefining what modern African dining feels and tastes like.”</blockquote>
-          <div class="reviewer">
-            <div class="reviewer-avatar">MK</div>
-            <div class="reviewer-info">
-              <b>Marcus Klein</b>
-              <span>Epicure International Review</span>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </div></section>
-
-  <!-- Section 8: Cultural Calendar & Happenings (Redesigned as an Artisanal Schedule Ledger List) -->
-  <section id="events" class="events-section section-pad">
-    <div class="container">
-      <div class="events-header-wrap">
-        ${sectionHead('Cultural calendar', 'Evenings with <em>a pulse & purpose.</em>', 'Our dining room is a living stage. From low-lit vinyl sessions to live-fire apprentice masterclasses, explore our weekly cadence.')}
-        <div class="events-legend-pill">
-          <span class="live-dot"></span>
-          <span>Reservations Open 30 Days in Advance</span>
-        </div>
-      </div>
-
-      <div class="events-ledger-list">
-        <!-- Event Row 1 -->
-        <article class="event-ledger-row reveal">
-          <div class="event-cadence-badge">
-            <span class="cadence-day">THU</span>
-            <small class="cadence-freq">EVERY WEEK</small>
-            <span class="cadence-time">8:00 PM — LATE</span>
-          </div>
-          <div class="event-ledger-body">
-            <div class="event-ledger-heading">
-              <h3 class="event-ledger-title">Live Acoustic Jazz, Vinyl & Cellar Pours</h3>
-              <span class="event-leader-dots" aria-hidden="true"></span>
-              <span class="event-tag-pill"><i data-lucide="music"></i> Music & Wine</span>
-            </div>
-            <p class="event-ledger-desc">An intimate trio of Lagos jazz instrumentalists perform acoustic arrangements alongside weekly sommelier flights of skin-contact natural wines, rare Sicilian volcanic reds, and curated midnight small plates.</p>
-            <div class="event-ledger-perks">
-              <span><i data-lucide="wine"></i> Flight Pairings from $38</span>
-              <span><i data-lucide="users"></i> Salon & Bar Seating</span>
-              <span><i data-lucide="clock-3"></i> Walk-ins Welcome at Bar</span>
-            </div>
-          </div>
-          <div class="event-ledger-action">
-            <a class="button button-primary magnetic" href="/pages/reservations.html?event=jazz">
-              <span>Reserve Table</span>
-              <i data-lucide="arrow-right"></i>
-            </a>
-          </div>
-        </article>
-
-        <!-- Event Row 2 -->
-        <article class="event-ledger-row reveal">
-          <div class="event-cadence-badge is-highlight">
-            <span class="cadence-day">SAT</span>
-            <small class="cadence-freq">1st OF MONTH</small>
-            <span class="cadence-time">11:00 AM — 2:30 PM</span>
-          </div>
-          <div class="event-ledger-body">
-            <div class="event-ledger-heading">
-              <h3 class="event-ledger-title">The Masterclass: Live Hearth Fire & Ember Searing</h3>
-              <span class="event-leader-dots" aria-hidden="true"></span>
-              <span class="event-tag-pill is-fire"><i data-lucide="flame"></i> Chef Masterclass</span>
-            </div>
-            <p class="event-ledger-desc">Step behind the line with Chef Amara Cole. Explore timber selection (mahogany, oak, fruitwood), fire temperature management (from 80°C cold smoke to 450°C blazing coals), and finish with a communal 4-course banquet.</p>
-            <div class="event-ledger-perks">
-              <span><i data-lucide="award"></i> Limited to 12 Guests</span>
-              <span><i data-lucide="utensils"></i> Includes 4-Course Feast</span>
-              <span><i data-lucide="gift"></i> Custom Apron Included</span>
-            </div>
-          </div>
-          <div class="event-ledger-action">
-            <a class="button button-primary magnetic" href="/pages/reservations.html?event=masterclass">
-              <span>Reserve Seat</span>
-              <i data-lucide="arrow-right"></i>
-            </a>
-          </div>
-        </article>
-
-        <!-- Event Row 3 -->
-        <article class="event-ledger-row reveal">
-          <div class="event-cadence-badge">
-            <span class="cadence-day">SUN</span>
-            <small class="cadence-freq">EVERY WEEK</small>
-            <span class="cadence-time">12:00 PM — 5:00 PM</span>
-          </div>
-          <div class="event-ledger-body">
-            <div class="event-ledger-heading">
-              <h3 class="event-ledger-title">The Sunday Communal Harvest & Feasting Table</h3>
-              <span class="event-leader-dots" aria-hidden="true"></span>
-              <span class="event-tag-pill"><i data-lucide="users"></i> Family Dining</span>
-            </div>
-            <p class="event-ledger-desc">Convivial, sharing-style banquets served down the center of our long oak tables on hand-thrown ceramics. Whole-roasted market catch, 12-hour short ribs, warm cassava flatbreads, and large-format wine magnums.</p>
-            <div class="event-ledger-perks">
-              <span><i data-lucide="smile"></i> Perfect for Groups (4+)</span>
-              <span><i data-lucide="heart"></i> Family & Kids Welcome</span>
-              <span><i data-lucide="sparkles"></i> Seasonal Surprise Dessert</span>
-            </div>
-          </div>
-          <div class="event-ledger-action">
-            <a class="button button-primary magnetic" href="/pages/reservations.html?event=sunday-harvest">
-              <span>Reserve Feast</span>
-              <i data-lucide="arrow-right"></i>
-            </a>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 9: Reservation Banner -->
   <section class="reservation-banner"><img src="${img.drinks}" alt="Candlelit restaurant table"><div class="container"><span class="eyebrow">Your table is waiting</span><h2>Reserve your evening.</h2><p>Good food tastes better when it is shared.</p><a class="button button-primary magnetic" href="/pages/reservations.html">Book a table <i data-lucide="calendar-days"></i></a></div></section>
   </main>${footer()}`
 }
 
 function about() {
-  return `${pageHero('Since 2016 · Onitsha', 'Food with a story.<br><em>People with passion.</em>', 'Flavoro was built around one simple belief: the best tables make room for everyone.', img.interior, 'About')}
-  <section id="story" class="story section-pad"><div class="container split-section"><div>${sectionHead('Our story', 'It started with a table for twelve.', 'What began as a tiny candlelit supper club became a home for curious palates and generous hospitality.')}<p class="reveal">Founder and executive chef Amara Cole grew up around noisy Sunday lunches where recipes were rarely written down and nobody left early. Flavoro carries that spirit forward—refined, never restrained.</p><p class="reveal">Today, our menu follows the seasons while our dining room stays grounded in warmth, spontaneity and the pleasure of sharing.</p></div><div class="reveal-image framed-image"><img src="${img.interior}" alt="Our dining room"><span>EST. 2016</span></div></div></section>
-  <section class="numbers"><div class="container stats-grid">${[['10+','Years of flavor'],['42','Local partners'],['18k','Happy guests'],['4.9','Average rating']].map(x=>`<div class="stat reveal"><strong data-count>${x[0]}</strong><span>${x[1]}</span></div>`).join('')}</div></section>
-  <section class="values section-pad"><div class="container">${sectionHead('Our philosophy', 'Nothing extra. Nothing ordinary.', 'Four principles guide every choice, from the first delivery to the final goodbye.')}<div class="big-card-grid">${[['leaf','Season first','We let ingredients lead, changing our cooking as the market changes.'],['flame','Fire & patience','Some flavors need heat. Others simply need time.'],['heart','Radical warmth','Hospitality begins before you arrive and lingers after you leave.'],['sparkles','Always curious','Tradition is our foundation, never our limit.']].map(([i,t,c],n)=>`<article class="value-card reveal-card"><span>0${n+1}</span><i data-lucide="${i}"></i><h3>${t}</h3><p>${c}</p></article>`).join('')}</div></div></section>
-  <section class="timeline section-pad"><div class="container"><div class="sticky-copy">${sectionHead('The journey', 'A decade in motion.')}</div><div class="timeline-list">${[['2016','Twelve seats, one menu','Our first supper was served in a borrowed room with a record player and a lot of nerve.'],['2019','Flavoro found a home','We opened our own dining room and invited the city in.'],['2022','The kitchen grew','A new team, a live-fire hearth and our first chef’s tasting menu.'],['Today','Still hungry','New ideas, new producers and the same promise of a beautiful evening.']].map(x=>`<article class="reveal"><strong>${x[0]}</strong><div><h3>${x[1]}</h3><p>${x[2]}</p></div></article>`).join('')}</div></div></section>
-
-  <!-- NEW SECTION: Our Producers & Growers (About) -->
-  <section id="ecosystem" class="producers-section section-pad"><div class="container">
-    ${sectionHead('Our ecosystem', 'The hands behind <em>the harvest.</em>', 'Great food is born long before it reaches our stove. We proudly collaborate with independent growers, fishermen, and millers.')}
-    <div class="producers-grid">
-      <article class="producer-card reveal-card">
-        <div class="producer-image"><img src="${img.salad}" alt="Highland Valley Farm greens"></div>
-        <div class="producer-content">
-          <small>Heirloom Produce · Jos Plateau</small>
-          <h3>Highland Valley Farms</h3>
-          <p>Cultivating native heirloom herbs, brassicas, and crisp organic root vegetables grown at 1,200m elevation with zero synthetic fertilizers.</p>
-        </div>
-      </article>
-      <article class="producer-card reveal-card">
-        <div class="producer-image"><img src="${img.fish}" alt="Coastal artisanal fishery catch"></div>
-        <div class="producer-content">
-          <small>Sustainable Day-Boat · Atlantic Coast</small>
-          <h3>Delta Hook & Line Fishery</h3>
-          <p>A generational cooperative of coastal divers and hook-and-line fishermen bringing wild red snapper and prawns into our kitchen within 24 hours.</p>
-        </div>
-      </article>
-      <article class="producer-card reveal-card">
-        <div class="producer-image"><img src="${img.breakfast}" alt="Heritage stone-ground grain sourdough"></div>
-        <div class="producer-content">
-          <small>Ancient Grains · Kano Valley</small>
-          <h3>Heritage Stone Mills</h3>
-          <p>Stone-grinding single-variety ancient millet, sorghum, and wheat flours on natural granite millstones for our slow-fermented hearth breads.</p>
-        </div>
-      </article>
-    </div>
-  </div></section>
-
-  <!-- NEW SECTION: Hospitality & Sustainability Pledge (About) -->
-  <section id="pledge" class="pledge-section section-pad"><div class="container">
-    ${sectionHead('Our pledge', 'Hospitality with <em>a conscience.</em>', 'We treat our soil, our ocean, our team, and our guests with equal devotion.')}
-    <div class="pledge-grid">
-      <div class="pledge-card reveal-card">
-        <i data-lucide="leaf"></i>
-        <h3>Zero Food Waste</h3>
-        <p>Every vegetable trim, bone, and peel is transformed into savory glazes, stocks, vinegar reductions, or enriched garden compost.</p>
-      </div>
-      <div class="pledge-card reveal-card">
-        <i data-lucide="shield-check"></i>
-        <h3>100% Plastic Free</h3>
-        <p>We eliminated single-use plastics from deliveries, storage, and guest services in favor of beeswax wraps, glass, and compostables.</p>
-      </div>
-      <div class="pledge-card reveal-card">
-        <i data-lucide="heart"></i>
-        <h3>Living Wage & Care</h3>
-        <p>All kitchen and dining room staff receive industry-leading living wages, comprehensive healthcare, and four-day flexible work weeks.</p>
-      </div>
-      <div class="pledge-card reveal-card">
-        <i data-lucide="users"></i>
-        <h3>Apprentice Guild</h3>
-        <p>We sponsor six young culinary apprentices annually with full tuition, hands-on hearth training, and guaranteed career placement.</p>
-      </div>
-    </div>
-  </div></section>
-
-  <section id="chefs" class="team-section section-pad"><div class="container">${sectionHead('The kitchen', 'Meet our chefs', 'Different backgrounds. One shared language: flavor.')}<div class="team-hero reveal-image"><img src="${img.chefs}" alt="Our chef team"></div><div class="team-names">${[['Amara Cole','Executive Chef'],['Luca Marino','Chef de Cuisine'],['Nneka Obi','Pastry Chef']].map(x=>`<div><h3>${x[0]}</h3><span>${x[1]}</span></div>`).join('')}</div></div></section>
-  <section class="reservation-banner"><img src="${img.hero}" alt="Signature dish"><div class="container"><span class="eyebrow">Come meet us</span><h2>Taste the story.</h2><a class="button button-primary" href="/pages/reservations.html">Reserve a table</a></div></section>${closePage()}`
+ return `${pageHero('The Flavoro feeling', 'Good food.<br><em>Better together.</em>', 'A table is more than a place to eat. It is a place to connect.', img.interior, 'About')}
+ <section id="story" class="table-story section-pad"><div class="container table-story-grid"><div class="table-story-copy reveal"><span class="eyebrow">THE IDEA BEHIND THE TABLE</span><h2>Make room for <em>the moment.</em></h2><p>Flavor, conversation and the simple pleasure of sharing a meal: that is the spirit behind Flavoro.</p><a class="text-link" href="/pages/menu.html">Explore the menu <i data-lucide="arrow-up-right"></i></a></div><div class="table-story-image reveal-image"><img src="${img.interior}" alt="A warmly lit dining room"><span>GOOD FOOD / GOOD PEOPLE</span></div><div class="table-story-aside"><span>THE FLAVORO FEELING</span><p>A little longer.<br>A little closer.</p></div></div></section>
+ <section id="chefs" class="section-pad"><div class="container split-section"><div class="reveal-image"><img src="${img.chefs}" alt="Chefs working together in a kitchen"></div><div>${sectionHead('The people', 'A little care in <em>every detail.</em>', 'From the kitchen to the table, hospitality is made by people.')}<p>Team stories and profiles will be shared here once verified.</p><a class="text-link" href="/pages/gallery.html">See the gallery <i data-lucide="arrow-up-right"></i></a></div></div></section>
+ <section id="ecosystem" class="section-pad story-produce"><div class="container split-section"><div>${sectionHead('Ingredients & craft', 'The ingredients are <em>just the beginning.</em>', 'A meal brings together ingredients, craft and the people around the table.')}<p>Producer details and sourcing information will be added when available.</p></div><div class="reveal-image"><img src="${img.salad}" alt="A colorful plate of greens"></div></div></section>
+ <section class="reservation-banner"><img src="${img.hero}" alt="A plated dish"><div class="container"><span class="eyebrow">Come together</span><h2>A table worth staying for.</h2><a class="button button-primary" href="/pages/reservations.html">Explore reservations</a></div></section>${closePage()}`
 }
 
 const dietaryTags = (name, description) => {
@@ -575,20 +91,21 @@ function menu() {
  return `${pageHero('Seasonal · Expressive · Live-Fired', 'The living menu.<br><em>Taste with instinct.</em>', 'Explore our peak-season creations, browse the authentic dining room carte to reserve your table experience, or fire an instant custom order straight to our hearth pass.', img.hero, 'Menu')}
 
  <!-- Dual-Mode Switcher: Clean Separation of Reservation Dining Carte vs Live Order Pass -->
+ <div class="experience-notice"><div class="container">MENU PREVIEW &nbsp; / &nbsp; Dishes, prices and ordering are illustrative. Orders are not sent to a kitchen.</div></div>
  <section class="menu-mode-switcher-bar">
    <div class="container mode-switcher-container">
      <div class="mode-switcher-capsule">
        <button type="button" class="mode-tab-btn is-active" data-menu-mode="dining-carte" id="tab-btn-carte">
          <i data-lucide="book-open"></i>
          <div class="mode-tab-text">
-           <span class="mode-title">The Grand Dining Carte</span>
+           <span class="mode-title"><span class="mode-long">The Grand Dining Carte</span><span class="mode-short">Dine in</span></span>
            <small class="mode-subtitle">Authentic Restaurant Menu List · Table Reservations & Pairings</small>
          </div>
        </button>
        <button type="button" class="mode-tab-btn" data-menu-mode="hearth-order" id="tab-btn-order">
          <i data-lucide="flame"></i>
          <div class="mode-tab-text">
-           <span class="mode-title">The Live Hearth Order Pass</span>
+           <span class="mode-title"><span class="mode-long">The Live Hearth Order Pass</span><span class="mode-short">Order food</span></span>
            <small class="mode-subtitle">Live Table Orders · Ingredient Customizer & Bespoke Plates</small>
          </div>
        </button>
@@ -617,6 +134,7 @@ function menu() {
        <p class="carte-folio-epigraph">"Every plate is an unhurried conversation between ancient embers, morning wild-foraged harvests, and time-honored fermentation. Cooked for your table with instinct and devotion."</p>
        
        <!-- Course Fast Jump Navigation -->
+       <div class="carte-search-tools"><label for="carte-search">Find a dish</label><input type="search" id="carte-search" placeholder="Search dishes or ingredients" autocomplete="off"><div class="carte-diet-controls" role="group" aria-label="Filter dishes"><button type="button" data-carte-filter="all" aria-pressed="true">All</button><button type="button" data-carte-filter="vegetarian" aria-pressed="false">Vegetarian</button><button type="button" data-carte-filter="gluten-free" aria-pressed="false">Gluten-free</button><button type="button" data-carte-filter="spicy" aria-pressed="false">Spicy</button></div><p id="carte-filter-status" role="status" aria-live="polite"></p><p class="carte-allergen-note">Menu data is illustrative. Confirm ingredients and allergens with the restaurant before ordering.</p></div>
        <nav class="carte-course-nav" aria-label="Course fast navigation">
          <a href="#act-morning" class="course-jump-pill"><i data-lucide="sun"></i> Act I: Morning Starters</a>
          <a href="#act-midday" class="course-jump-pill"><i data-lucide="utensils"></i> Act II: Midday Harvest</a>
@@ -714,13 +232,13 @@ function menu() {
          <div class="live-hearth-pulse">
            <span class="hearth-fire-beacon"></span>
            <div>
-             <strong>LIVE HEARTH DISPATCH ACTIVE</strong>
-             <span>Woodfire Temperature: 450°C · Average Line Prep: 14 Mins</span>
+             <strong>EXPLORE THE ORDER PREVIEW</strong>
+             <span>Build a sample order and explore customization</span>
            </div>
          </div>
        </div>
        <div class="hud-col-right">
-         <span class="hud-ticket-counter"><i data-lucide="clock"></i> Active Kitchen Queues: 2 Tickets</span>
+         <span class="hud-ticket-counter"><i data-lucide="clock"></i> Demo only · no live kitchen connection</span>
          <a href="#custom-studio" class="btn-scroll-custom-studio"><i data-lucide="sparkles"></i> Build Custom Plate from Scratch</a>
        </div>
      </div>
@@ -730,12 +248,12 @@ function menu() {
        <!-- Search Bar -->
        <div class="search-bar-wrap">
          <i data-lucide="search" class="search-icon"></i>
-         <input type="text" id="menu-search-input" class="menu-search-input" placeholder="Search menu dishes, or search by ingredient to exclude/include (e.g. truffle, snapper, brioche, mushroom)..." autocomplete="off">
+         <input type="text" id="menu-search-input" class="menu-search-input" aria-label="Search menu dishes and ingredients" placeholder="Search menu dishes, or search by ingredient to exclude/include (e.g. truffle, snapper, brioche, mushroom)..." autocomplete="off">
          <button type="button" id="menu-search-clear" class="search-clear-btn" aria-label="Clear search"><i data-lucide="x"></i></button>
        </div>
 
        <!-- Category Navigation Tabs -->
-       <div class="filter-group category-filter-group" role="tablist" aria-label="Order categories">
+       <div class="filter-group category-filter-group" role="group" aria-label="Order categories">
          <button type="button" class="filter-tab is-active" data-category-filter="all">All Kitchen Stations <span class="tab-count">16</span></button>
          <button type="button" class="filter-tab" data-category-filter="breakfast">Morning Station <span class="tab-count">4</span></button>
          <button type="button" class="filter-tab" data-category-filter="lunch">Midday Station <span class="tab-count">4</span></button>
@@ -797,7 +315,7 @@ function menu() {
  </div>
 
  <!-- Modal: Dedicated Ingredient Customizer (What you DON'T want + What you DO want) -->
- <div id="quick-view-modal" class="flavoro-modal" aria-hidden="true">
+ <div id="quick-view-modal" class="flavoro-modal" role="dialog" aria-modal="true" aria-label="Customize dish" aria-hidden="true">
    <div class="modal-backdrop"></div>
    <div class="modal-dialog quick-view-dialog">
      <button type="button" class="modal-close" aria-label="Close modal"><i data-lucide="x"></i></button>
@@ -806,7 +324,7 @@ function menu() {
  </div>
 
  <!-- Slide-over Drawer: Interactive Order Bag -->
- <div id="order-bag-drawer" class="order-drawer" aria-hidden="true">
+ <div id="order-bag-drawer" class="order-drawer" role="dialog" aria-modal="true" aria-label="Order bag" aria-hidden="true">
    <div class="drawer-backdrop"></div>
    <div class="drawer-panel">
      <div class="drawer-header">
@@ -814,42 +332,13 @@ function menu() {
          <i data-lucide="shopping-bag"></i>
          <div>
            <h3>Your Order Bag</h3>
-           <span>Routed directly to the Hearth Pass</span>
+           <span>Your selections, ready to review</span>
          </div>
        </div>
        <button type="button" class="drawer-close" aria-label="Close order bag"><i data-lucide="x"></i></button>
      </div>
 
-     <!-- Dining Mode Selection -->
-     <div class="drawer-mode-switch">
-       <button type="button" class="mode-tab is-active" data-dining-mode="dine-in">
-         <i data-lucide="utensils"></i> Dine-In Table
-       </button>
-       <button type="button" class="mode-tab" data-dining-mode="pickup">
-         <i data-lucide="clock"></i> Takeaway Pickup
-       </button>
-     </div>
-
-     <!-- Table Number / Pickup Time Inputs -->
-     <div class="drawer-location-inputs">
-       <div id="dine-in-table-wrap" class="input-group">
-         <label for="dine-in-table-number">Table / Seating Area</label>
-         <input type="text" id="dine-in-table-number" placeholder="e.g. Table 12, Counter 4, Garden Salon" value="Table 12">
-       </div>
-       <div id="pickup-time-wrap" class="input-group is-hidden">
-         <label for="pickup-time-select">Requested Pickup Time</label>
-         <select id="pickup-time-select">
-           <option>Today in 25 mins (Fastest)</option>
-           <option>Today in 45 mins</option>
-           <option>Today at 7:00 PM</option>
-           <option>Today at 8:30 PM</option>
-         </select>
-       </div>
-       <div class="input-group">
-         <label for="order-guest-name">Guest Name</label>
-         <input type="text" id="order-guest-name" placeholder="Your name or party name" value="Honored Guest">
-       </div>
-     </div>
+     <div class="drawer-preview-notice">Guest checkout · preview only. No order or payment will be sent.</div>
 
      <!-- Items List Container -->
      <div class="drawer-items-list"></div>
@@ -861,24 +350,13 @@ function menu() {
            <span>Food & Beverage Subtotal:</span>
            <b id="drawer-subtotal">$0.00</b>
          </div>
-         <div class="summary-line">
-           <span>Local Hospitality Tax (8%):</span>
-           <b id="drawer-tax">$0.00</b>
-         </div>
-         <div class="summary-line">
-           <span>Kitchen & Service Gratuity (10%):</span>
-           <b id="drawer-gratuity">$0.00</b>
-         </div>
-         <div class="summary-total-line">
-           <span>Grand Total:</span>
-           <strong id="drawer-grand-total">$0.00</strong>
-         </div>
+         <div class="summary-line"><span>Taxes and fees</span><b>Not calculated</b></div>
        </div>
 
        <button type="button" class="button button-primary btn-checkout" id="btn-checkout-order">
-         <i data-lucide="check-circle-2"></i> <span>Send Order to Live Kitchen</span>
+         <i data-lucide="check-circle-2"></i> <span>Continue to checkout</span>
        </button>
-       <small class="drawer-safe-guarantee"><i data-lucide="shield-check"></i> 100% Guaranteed Fresh from Hearth · Zero Contact Friction</small>
+       <small class="drawer-safe-guarantee"><i data-lucide="shield-check"></i> Preview only · no payment or order will be sent</small>
      </div>
    </div>
  </div>
@@ -890,7 +368,7 @@ function menu() {
      <span class="float-badge order-bag-count">0</span>
    </div>
    <div class="float-text-wrap">
-     <small>Active Table Order</small>
+     <small>Your preview bag</small>
      <b class="order-bag-total">$0.00</b>
    </div>
    <i data-lucide="arrow-up-right" class="float-arrow"></i>
@@ -899,10 +377,14 @@ function menu() {
  ${closePage()}`
 }
 
+function checkout() {
+ return `${header('Menu')}<main id="main-content" class="checkout-page"><section class="checkout-shell container"><div class="checkout-heading"><a href="/pages/menu.html#order" class="checkout-back">← &nbsp; Back to menu</a><span class="eyebrow">YOUR TABLE / GUEST CHECKOUT</span><h1>One last <em>look.</em></h1><p>Review your selections at your own pace. No account needed.</p></div><div class="checkout-disclaimer"><i data-lucide="info"></i><span><strong>Checkout preview only.</strong> Ordering and payments are not connected. No order will be placed or payment collected.</span></div><div id="checkout-root"></div></section></main>${footer()}`
+}
+
 function gallery() {
- const tiles = [img.hero,img.interior,img.chefs,img.dessert,img.drinks,img.breakfast,img.fish,img.private,img.salad,img.portrait,img.hero,img.drinks]
+ const tiles = [[img.hero,'A plated pasta dish'],[img.interior,'A warmly lit dining room'],[img.chefs,'Chefs together in the kitchen'],[img.dessert,'A dessert'],[img.drinks,'Cocktails at the bar'],[img.breakfast,'A breakfast dish'],[img.fish,'A fish dish'],[img.private,'A table set for private dining'],[img.salad,'A plate of greens'],[img.portrait,'A chef portrait'],[img.breakfastPhoto,'Scrambled eggs served with toast'],[img.dessertPhoto,'A chocolate dessert with cinnamon'],[img.cocktailPhoto,'A cocktail served at a bar'],[img.barPhoto,'A bartender preparing drinks']]
  return `${pageHero('A look inside', 'Good nights.<br><em>Beautifully remembered.</em>', 'From first light in the kitchen to the last glass at the bar.', img.drinks, 'Gallery')}
- <section class="gallery-section section-pad"><div class="container">${sectionHead('The Flavoro journal', 'Scenes from our table')}<div class="gallery-grid">${tiles.map((src,i)=>`<button class="gallery-tile reveal-image" data-lightbox="${src}" aria-label="Open gallery image ${i+1}"><img src="${src}" alt="Flavoro restaurant moment ${i+1}"><span><i data-lucide="maximize-2"></i></span></button>`).join('')}</div></div></section>
+ <section class="gallery-section section-pad"><div class="container">${sectionHead('The Flavoro journal', 'Scenes from our table', 'A visual collection of illustrative food and hospitality photography.')}<div class="gallery-grid">${tiles.map(([src,alt])=>`<button class="gallery-tile reveal-image" data-lightbox="${src}" aria-label="View: ${alt}"><img src="${src}" alt="${alt}"><span><i data-lucide="maximize-2"></i></span></button>`).join('')}</div></div></section>
  ${marquee('COME HUNGRY · STAY A WHILE ·')}
 
  <!-- NEW SECTION: The Arc of a Day in Motion (Gallery) -->
@@ -932,23 +414,19 @@ function gallery() {
    </div>
  </div></section>
 
- <section class="gallery-quote section-pad"><div class="container"><i data-lucide="quote"></i><blockquote>“A restaurant should feel like a world you can step into—and never quite want to leave.”</blockquote><span>Flavoro, Onitsha</span></div></section><div class="lightbox" data-lightbox-modal><button aria-label="Close"><i data-lucide="x"></i></button><img alt="Expanded gallery view"></div>${closePage()}`
+ <section class="gallery-quote section-pad"><div class="container"><i data-lucide="quote"></i><blockquote>“A restaurant should feel like a world you can step into—and never quite want to leave.”</blockquote><span>Flavoro, Onitsha</span></div></section><div class="lightbox" data-lightbox-modal role="dialog" aria-modal="true" aria-label="Gallery image viewer"><button class="lightbox-close" aria-label="Close gallery viewer"><i data-lucide="x"></i></button><img alt=""><div class="lightbox-controls"><button type="button" data-lightbox-prev aria-label="Previous image">← Previous</button><span data-lightbox-count aria-live="polite"></span><button type="button" data-lightbox-next aria-label="Next image">Next →</button></div></div>${closePage()}`
 }
 
 function reservations() {
- return `${pageHero('Table Reservations · Live Hearth Dining', 'Reserve your table.<br><em>Curate your evening.</em>', 'Select your table setting and pre-choose from our live multi-course menu so Chef Amara’s hearth pass is prepared for your party.', img.interior, 'Reservations')}
+ return `${pageHero('Table Reservations · Preview', 'Reserve your table.<br><em>Curate your evening.</em>', 'Explore the booking experience. Reservations are not connected or confirmed on this site.', img.interior, 'Reservations')}
  <section class="booking-section section-pad">
    <div class="container booking-grid">
      <div>
-       ${sectionHead('Table Reservation', 'Secure your dining table', 'Book in advance for our dining salon, hearth counter, or secret garden terrace. For parties of seven or more, our communal feasting boards ensure a seamless evening.')}
-       <div class="booking-notes">
-         <div><i data-lucide="clock-3"></i><span><b>Dining Hours</b>Mon—Thu 5pm—11pm<br>Fri—Sun 12pm—late</span></div>
-         <div><i data-lucide="phone"></i><span><b>Reservations Concierge</b>+234 123 456 7890</span></div>
-         <div><i data-lucide="utensils"></i><span><b>Live Menu Pre-Selection</b>Our kitchen preps your chosen courses before your arrival</span></div>
-       </div>
+       ${sectionHead('Table Reservation', 'Find your place at the table', 'Explore the reservation experience as a guest. No account is required.')}
+       <p class="demo-notice">Online booking is not connected. Dates and times shown below are examples, not availability.</p>
      </div>
 
-     <form id="reservation-booking-form" class="booking-form reveal">
+     <form id="reservation-booking-form" class="booking-form reveal"><p class="demo-notice" role="status">Preview only: availability is not live and this form cannot book a table.</p>
        <div class="res-step-badge"><span>Step 1 · Reservation Details</span></div>
        <div class="form-row">
          <label>Full name<input required name="name" type="text" placeholder="Your full name"></label>
@@ -959,18 +437,18 @@ function reservations() {
          <label>Time<select name="time"><option>5:30 PM</option><option>6:00 PM</option><option>7:00 PM</option><option>8:00 PM</option><option>9:00 PM</option><option>9:30 PM</option></select></label>
        </div>
        <div class="form-row">
-         <label>Party size<select name="party"><option>2 guests</option><option>3 guests</option><option>4 guests</option><option>5 guests</option><option>6 guests</option><option>7+ guests (Feasting)</option></select></label>
+         <label>Party size<select name="party"><option>1 guest</option><option selected>2 guests</option><option>3 guests</option><option>4 guests</option><option>5 guests</option><option>6 guests</option><option>7+ guests (Feasting)</option></select></label>
          <label>Table Atmosphere<select name="setting"><option>Main Dining Room (Atmospheric)</option><option>Fire Hearth Counter (Chef View)</option><option>Secret Garden Terrace (Open Air)</option><option>Private Dining Room</option></select></label>
        </div>
 
        <!-- Embedded Live Menu Course Selector (Separated from Online Ordering) -->
-       <div class="res-step-badge" style="margin-top:28px;"><span>Step 2 · Pre-Select Live Menu for Your Table</span></div>
+       <div class="res-step-badge" style="margin-top:28px;"><span>Step 2 · Explore a sample menu</span></div>
        <div id="reservation-live-menu-wrap" class="res-live-menu-wrapper"></div>
 
        <label style="margin-top:24px;">Special Wishes or Dietary Allergies for Chef Amara<textarea name="notes" placeholder="Anniversary celebrations, seating preferences, allergies..."></textarea></label>
        
        <button class="button button-primary btn-submit-res" type="submit" style="width:100%;margin-top:16px;">
-         <i data-lucide="calendar-days"></i> <span>Confirm Table Reservation with Selected Menu</span>
+         <i data-lucide="calendar-days"></i> <span>Review your selections</span>
        </button>
        <p class="form-status" data-form-status></p>
      </form>
@@ -1008,7 +486,7 @@ function reservations() {
    </div>
  </div></section>
 
- <section id="private-dining" class="private-dining section-pad"><div class="container split-section"><div class="reveal-image"><img src="${img.private}" alt="Private dining setup"></div><div>${sectionHead('Private dining', 'Your occasion, made personal.', 'Host an intimate dinner, a spirited celebration or a beautifully simple business lunch in our private room.')}<ul class="check-list"><li><i data-lucide="check"></i>Up to 28 seated guests</li><li><i data-lucide="check"></i>Custom seasonal menus</li><li><i data-lucide="check"></i>Dedicated host and sommelier</li></ul><a class="text-link" href="/pages/contact.html">Plan an event <i data-lucide="arrow-right"></i></a></div></div></section>
+ <section id="private-dining" class="private-dining section-pad"><div class="container split-section"><div class="reveal-image"><img src="${img.private}" alt="Private dining setup"></div><div>${sectionHead('Private dining', 'Your occasion, made personal.', 'Host an intimate dinner, a spirited celebration or a beautifully simple business lunch in our private room.')}<p>Capacity, menu options and enquiry details will be shared once confirmed.</p><a class="text-link" href="/pages/contact.html">Visit information <i data-lucide="arrow-right"></i></a></div></div></section>
 
  <!-- NEW SECTION: Celebration Touches (Reservations) -->
  <section id="addons" class="addons-section section-pad"><div class="container">
@@ -1037,22 +515,57 @@ function reservations() {
    </div>
  </div></section>
 
- <section class="faq section-pad"><div class="container narrow">${sectionHead('Good to know', 'Before you arrive')}<div class="accordion">${[['What is your cancellation policy?','Reservations can be changed or cancelled up to 24 hours before your booking.'],['Can you accommodate dietary needs?','Absolutely. Tell us when booking and our kitchen will create a thoughtful alternative.'],['Is there a dress code?','Smart casual. Come polished, comfortable and ready for a beautiful night.'],['Are children welcome?','Yes. Earlier reservations are especially suited to families.']].map(x=>`<details class="reveal"><summary>${x[0]}<i data-lucide="plus"></i></summary><p>${x[1]}</p></details>`).join('')}</div></div></section>${closePage()}`
+ <section class="faq section-pad"><div class="container narrow">${sectionHead('Good to know', 'Before you arrive')}<div class="accordion"><details><summary>Can I make a reservation online?<i data-lucide="plus"></i></summary><p>Online reservations are not connected yet. This page is a preview and does not confirm a booking.</p></details><details><summary>Where can I find accessibility and dietary information?<i data-lucide="plus"></i></summary><p>These details will be published once verified. Menu labels are illustrative and should not be relied on for allergies.</p></details><details><summary>Can I plan a private event?<i data-lucide="plus"></i></summary><p>Private dining details and enquiry options will be added when confirmed.</p></details></div></div></section>${closePage()}`
 }
 
 function blog() {
- const posts = [['The beautiful work before service',img.chefs,'Kitchen notes'],['Why we still cook with fire',img.hero,'Craft'],['A late-night guide to Flavoro',img.drinks,'City life'],['Meet the growers behind the menu',img.interior,'People'],['The art of the final course',img.dessert,'Pastry'],['Ten years around the table',img.interior,'Stories']]
- return `${pageHero('Stories from Flavoro', 'Notes from<br><em>behind the pass.</em>', 'People, produce, places and the ideas shaping our restaurant.', img.chefs, 'Blog')}
- <section class="featured-story section-pad"><div class="container split-section"><div class="reveal-image"><img src="${img.hero}" alt="Cooking with fire"></div><div><span class="eyebrow">Featured · 8 min read</span><h2>Cooking by instinct in a kitchen built on trust.</h2><p>Chef Amara on leading a team, listening to ingredients and leaving enough room for surprise.</p><a class="text-link" href="#article">Read the story <i data-lucide="arrow-right"></i></a></div></div></section>
- <section class="journal section-pad"><div class="container">${sectionHead('The journal', 'Fresh from Flavoro')}<div class="post-grid">${posts.map((x,i)=>`<article class="post-card reveal-card"><a href="#article"><div><img src="${x[1]}" alt="${x[0]}"><span>${x[2]}</span></div><small>${String(i+2).padStart(2,'0')}.07.2026 · 5 min read</small><h3>${x[0]}</h3><p>Go a little deeper into the ingredients, rituals and people behind each evening.</p><span class="text-link">Read story <i data-lucide="arrow-right"></i></span></a></article>`).join('')}</div></div></section>
- <section id="article" class="newsletter"><div class="container"><span class="eyebrow">A good note, occasionally</span><h2>Stories worth savoring.</h2><p>New menus, kitchen dispatches and invitations—sent with restraint.</p><form data-demo-form><input type="email" required aria-label="Email address" placeholder="Email address"><button class="button button-primary">Join the list</button></form><p data-form-status></p></div></section>${closePage()}`
+ return `${pageHero('The Flavoro journal', 'Notes from<br><em>around the table.</em>', 'Ideas about food, hospitality and the joy of gathering.', img.chefs, 'Blog')}
+ <section class="journal-essays section-pad"><div class="container"><div class="journal-intro">${sectionHead('A collection of thoughts', 'A little more to <em>savor.</em>', 'Three short reflections on what makes a meal memorable.')}</div><div class="journal-essay-grid">
+ <article id="gathering" class="journal-essay reveal"><span>01 / THE TABLE</span><h2>The art of staying a little longer.</h2><p>The best meals have a way of stretching beyond the last bite. They give us space to catch up, celebrate, and be present with the people around us.</p><a class="text-link" href="/pages/journal-gathering.html">Read the story ↗</a></article>
+ <article id="craft" class="journal-essay reveal"><span>02 / THE CRAFT</span><h2>Good food begins with attention.</h2><p>A memorable plate is more than a list of ingredients. It is a balance of texture, warmth and care, brought together for the pleasure of sharing.</p><a class="text-link" href="/pages/journal-craft.html">Read the story ↗</a></article>
+ <article id="hospitality" class="journal-essay reveal"><span>03 / THE FEELING</span><h2>There is always room at the table.</h2><p>Hospitality can be found in the small things: a warm welcome, a comfortable space, and the feeling that there is nowhere else you need to be.</p><a class="text-link" href="/pages/journal-hospitality.html">Read the story ↗</a></article>
+ </div></div></section><section class="reservation-banner"><img src="${img.interior}" alt="A dining room"><div class="container"><span class="eyebrow">The next chapter</span><h2>Find your place at the table.</h2><a class="button button-primary" href="/pages/reservations.html">Explore reservations</a></div></section>${closePage()}`
 }
 
 function contact() {
- return `${pageHero('Come find us', 'Let’s make<br><em>something memorable.</em>', 'Reservations, private events, press, partnerships—or simply a hello.', img.interior, 'Contact')}
- <section class="contact-section section-pad"><div class="container contact-grid"><div>${sectionHead('Contact', 'We would love to hear from you.')}<div class="contact-methods"><a href="tel:+2341234567890"><i data-lucide="phone"></i><span><small>Call</small>+234 123 456 7890</span></a><a href="mailto:hello@flavoro.restaurant"><i data-lucide="mail"></i><span><small>Email</small>hello@flavoro.restaurant</span></a><div><i data-lucide="map-pin"></i><span><small>Visit</small>123 Food Street, GRA, Onitsha</span></div></div></div><form class="contact-form reveal" data-demo-form><div class="form-row"><label>Name<input required placeholder="Your name"></label><label>Email<input required type="email" placeholder="Your email"></label></div><label>What can we help with?<select><option>General enquiry</option><option>Private dining</option><option>Press & partnerships</option><option>Careers</option></select></label><label>Message<textarea required placeholder="Tell us a little more..."></textarea></label><button class="button button-primary">Send message <i data-lucide="arrow-right"></i></button><p data-form-status></p></form></div></section>
- <section class="location section-pad"><div class="container location-grid"><div class="map-card"><div class="map-lines"></div><span class="map-pin"><i data-lucide="map-pin"></i></span><div><b>Flavoro</b><small>Onitsha · Nigeria</small></div></div><div>${sectionHead('Hours & location', 'Meet us at the table.')}<div class="hours"><div><span>Monday—Thursday</span><b>5:00 PM—11:00 PM</b></div><div><span>Friday</span><b>12:00 PM—12:00 AM</b></div><div><span>Saturday</span><b>11:00 AM—12:00 AM</b></div><div><span>Sunday</span><b>11:00 AM—10:00 PM</b></div></div><a class="button button-dark" href="#">Get directions <i data-lucide="move-up-right"></i></a></div></div></section>
- <section class="reservation-banner"><img src="${img.drinks}" alt="Flavoro bar"><div class="container"><span class="eyebrow">See you soon</span><h2>The best nights begin here.</h2><a class="button button-primary" href="/pages/reservations.html">Reserve your table</a></div></section>${closePage()}`
+ return `${pageHero('Plan your visit', 'Let’s make<br><em>something memorable.</em>', 'Find the information you need for a good time around the table.', img.interior, 'Contact')}
+ <div class="experience-notice"><div class="container">VISIT INFORMATION IS BEING VERIFIED. CONTACT DETAILS, HOURS AND DIRECTIONS ARE NOT YET AVAILABLE.</div></div>
+ <section class="section-pad visit-section"><div class="container visit-grid"><div>${sectionHead('Visit Flavoro', 'Everything begins <em>at the table.</em>', 'Planning a visit, a celebration or a larger gathering? Essential details will appear here once confirmed.')}</div><div class="visit-info"><article><span>01 / LOCATION</span><h3>Finding us</h3><p>A verified address and directions will be added here.</p></article><article><span>02 / OPENING HOURS</span><h3>When to visit</h3><p>Hours and walk-in information are not yet available.</p></article><article><span>03 / ACCESSIBILITY</span><h3>Making your visit comfortable</h3><p>Accessibility, transport and parking details will be shared when confirmed.</p></article><article><span>04 / GET IN TOUCH</span><h3>Talk to us</h3><p>Verified contact details are not yet available. This website is a preview and cannot send enquiries.</p></article></div></div></section>
+ <section class="reservation-banner"><img src="${img.private}" alt="A table set for dining"><div class="container"><span class="eyebrow">Gather beautifully</span><h2>Make a moment of it.</h2><a class="button button-primary" href="/pages/private-dining.html">Explore private dining</a></div></section>${closePage()}`
+}
+
+function privateDining() {
+ return `${pageHero('Private dining & occasions', 'Make a moment<br><em>of it.</em>', 'A little more time, a little more space, and good company around the table.', img.stockDining, 'Reservations')}
+ <div class="experience-notice"><div class="container">ILLUSTRATIVE PHOTOGRAPHY · SPACE DETAILS AND ENQUIRIES ARE NOT YET AVAILABLE.</div></div>
+ <section class="section-pad table-story"><div class="container split-section"><div>${sectionHead('Gather beautifully', 'A table for <em>your occasion.</em>', 'From intimate dinners to shared celebrations, imagine an occasion shaped around the people who matter.')}<p>Capacity, menus, accessibility and pricing will be shared once confirmed. Enquiries are not connected in this preview.</p><a class="text-link" href="/pages/visit.html">Plan a visit <i data-lucide="arrow-up-right"></i></a></div><div class="reveal-image"><img src="${img.sharedPasta}" alt="Pasta dishes shared at a table"></div></div></section>
+ <section class="section-pad"><div class="container narrow">${sectionHead('Planning ahead', 'The details matter.')}<div class="accordion"><details><summary>How many guests can be accommodated?<i data-lucide="plus"></i></summary><p>Capacity has not yet been confirmed.</p></details><details><summary>Are special menus available?<i data-lucide="plus"></i></summary><p>Menu options and dietary arrangements will be shared once confirmed.</p></details><details><summary>How do I enquire?<i data-lucide="plus"></i></summary><p>Contact and enquiry services are not connected yet.</p></details></div></div></section>${closePage()}`
+}
+function visit() {
+ return `${pageHero('Plan your visit', 'Find your place<br><em>at the table.</em>', 'Everything you need for a comfortable visit, all in one place.', img.stockDining, 'Contact')}
+ <div class="experience-notice"><div class="container">ILLUSTRATIVE PHOTOGRAPHY · VISIT INFORMATION IS AWAITING VERIFICATION.</div></div><section class="visit-section section-pad"><div class="container visit-grid"><div>${sectionHead('Before you arrive', 'The details of <em>your visit.</em>', 'We will share verified information here when it is available.')}<a class="selection-link" href="/pages/reservations.html">Explore reservations <span>↗</span></a></div><div class="visit-info"><article><span>01 / ADDRESS</span><h3>Where to find us</h3><p>Address and directions are not yet available.</p></article><article><span>02 / HOURS</span><h3>When to visit</h3><p>Opening hours and walk-in guidance are not yet confirmed.</p></article><article><span>03 / GETTING HERE</span><h3>Transport & parking</h3><p>Transport and parking information will be added once verified.</p></article><article><span>04 / ACCESSIBILITY</span><h3>Making your visit comfortable</h3><p>Venue accessibility details and contact information are awaiting confirmation.</p></article></div></div></section>${closePage()}`
+}
+function people() {
+ return `${pageHero('The people', 'The warmth<br><em>behind the table.</em>', 'Food brings us together; people make the moment.', img.chefs, 'About')}<section class="section-pad"><div class="container split-section"><div>${sectionHead('People & craft', 'Hospitality is a <em>shared story.</em>', 'A great meal is shaped by the hands, ideas and care behind it.')}<p>Verified team profiles and producer stories will appear here when available.</p><a class="text-link" href="/pages/about.html">Explore our story <i data-lucide="arrow-up-right"></i></a></div><div class="reveal-image"><img src="${img.chefs}" alt="Chefs in a kitchen"></div></div></section>${closePage()}`
+}
+const articles = {
+ 'journal-gathering': { title:'The art of staying a little longer.', eyebrow:'The table', image:img.sharedPasta, paragraphs:['The best meals have a way of stretching beyond the last bite. They give us space to catch up, celebrate, and be present with the people around us.','A shared table is an invitation to slow down. Whether it is a celebration or an ordinary afternoon, the moments between the courses can be the ones we remember most.'] },
+ 'journal-craft': { title:'Good food begins with attention.', eyebrow:'The craft', image:'/images/menu/pasta-editorial.jpg', paragraphs:['A memorable plate is more than a list of ingredients. It is a balance of texture, warmth and care, brought together for the pleasure of sharing.','Thoughtful food is about the little choices: the contrast of flavors, the way a plate arrives, and the joy of offering it to someone else.'] },
+ 'journal-hospitality': { title:'There is always room at the table.', eyebrow:'The feeling', image:img.barPhoto, paragraphs:['Hospitality can be found in the small things: a warm welcome, a comfortable space, and the feeling that there is nowhere else you need to be.','It is the quiet art of making room for connection, conversation and the unexpected pleasure of spending time together.'] },
+}
+function journalArticle(key) {
+ const article = articles[key]
+ return `${pageHero(article.eyebrow, article.title, 'Notes from around the table.', article.image, 'Blog')}<article class="editorial-article section-pad"><div class="container narrow"><a class="text-link" href="/pages/blog.html">← Back to the journal</a><span class="eyebrow">${article.eyebrow} &nbsp; / &nbsp; THE FLAVORO JOURNAL</span>${article.paragraphs.map(p=>`<p>${p}</p>`).join('')}<div class="article-image"><img src="${article.image}" alt="Illustrative photograph for the story"><small>Illustrative photography</small></div><a class="selection-link" href="/pages/blog.html">More from the journal <span>↗</span></a></div></article>${closePage()}`
+}
+function infoPage(kind) {
+ const content = {
+  privacy: ['Privacy policy', 'Privacy matters.', 'Draft for review: this preview does not provide a finalized privacy policy. Before launch, the operator must disclose the data collected, purposes, retention, providers, user rights and contact details.', 'Preview forms are not connected and do not send information. The sample order bag uses session storage in your browser.'],
+  terms: ['Terms of use', 'A note on this site.', 'Draft for review: terms must be approved by the site operator before launch. The site currently presents an illustrative restaurant concept.', 'Menu details, prices, availability, booking and ordering are examples only and do not constitute an offer or confirmation.'],
+  accessibility: ['Accessibility', 'A table for everyone.', 'We aim to make this website usable with a keyboard and provide reduced-motion alternatives where possible.', 'This site has not yet completed an independent accessibility audit. Verified contact details for accessibility feedback and venue access information will be added when available.'],
+  'reservation-confirmation': ['Reservation status', 'No reservation confirmed.', 'Online booking is not connected. Visiting this page does not create or confirm a reservation.', 'Please return to the reservation preview to explore the experience.'],
+  'order-confirmation': ['Order status', 'No order placed.', 'Online ordering is not connected. Visiting this page does not submit or confirm an order.', 'You can return to the menu to explore the order preview.'],
+ }
+ const [label,title,one,two] = content[kind]
+ return `${pageHero(label, title, 'Flavoro · Information', img.interior, '')}<section class="editorial-article section-pad"><div class="container narrow"><span class="eyebrow">${label.toUpperCase()}</span><p>${one}</p><p>${two}</p><a class="selection-link" href="${kind === 'reservation-confirmation' ? '/pages/reservations.html' : kind === 'order-confirmation' ? '/pages/menu.html' : '/pages/visit.html'}">${kind === 'reservation-confirmation' ? 'Reservation preview' : kind === 'order-confirmation' ? 'Explore the menu' : 'Plan a visit'} <span>↗</span></a></div></section>${closePage()}`
 }
 
 function notFound() {
@@ -1065,10 +578,10 @@ function notFound() {
 
 function auth(type) {
  const signup = type === 'signup'
- return `<main id="main-content" class="auth-page"><a class="brand auth-brand" href="/index.html"><span class="brand-mark"><i data-lucide="utensils-crossed"></i></span><span><b>Flavoro</b><small>RESTAURANT</small></span></a><div class="auth-visual"><img src="${img.hero}" alt="Flavoro signature dish"><div><span class="script-line">Welcome to Flavoro</span><h1>${signup ? 'Your table has<br>room for you.' : 'Come back to<br>something delicious.'}</h1></div></div><div class="auth-panel"><a class="back-link" href="/index.html"><i data-lucide="arrow-left"></i>Back home</a><div class="auth-box"><span class="eyebrow">Flavoro members</span><h2>${signup ? 'Create an account' : 'Welcome back'}</h2><p>${signup ? 'Save favorites, manage reservations and enjoy a more personal Flavoro.' : 'Sign in to manage reservations and saved experiences.'}</p><form data-demo-form>${signup ? '<label>Full name<input required placeholder="Your full name"></label>' : ''}<label>Email address<input required type="email" placeholder="you@example.com"></label><label>Password<input required type="password" placeholder="••••••••"></label>${!signup ? '<div class="auth-options"><label><input type="checkbox"> Remember me</label><a href="#">Forgot password?</a></div>' : '<label class="terms"><input required type="checkbox"> I agree to the Terms and Privacy Policy.</label>'}<button class="button button-primary">${signup ? 'Create account' : 'Sign in'}<i data-lucide="arrow-right"></i></button><p data-form-status></p></form><div class="auth-switch">${signup ? 'Already have an account?' : 'New to Flavoro?'} <a href="/pages/${signup ? 'login' : 'signup'}.html">${signup ? 'Sign in' : 'Create account'}</a></div></div></div></main>`
+ return `<main id="main-content" class="auth-page"><a class="brand auth-brand" href="/index.html"><span class="brand-mark"><i data-lucide="utensils-crossed"></i></span><span><b>Flavoro</b><small>RESTAURANT</small></span></a><div class="auth-visual"><img src="${img.hero}" alt="A plated dish"><div><span class="script-line">Welcome to Flavoro</span><h1>${signup ? 'Your table has<br>room for you.' : 'Come back to<br>something delicious.'}</h1></div></div><div class="auth-panel"><a class="back-link" href="/index.html"><i data-lucide="arrow-left"></i>Back home</a><div class="auth-box"><span class="eyebrow">Flavoro members · Local preview</span><h2>${signup ? 'Create your space' : 'Welcome back'}</h2><p>Keep a local collection of your favorite dishes and preferences.</p><div class="demo-notice">Browser-only demo, not secure authentication. Use a test password, not a real one. One guest account per browser; clearing storage removes it.</div><form data-account-form data-mode="${signup ? 'signup' : 'login'}">${signup ? '<label>Full name<input name="name" required maxlength="60" autocomplete="name" placeholder="Your full name"></label>' : ''}<label>Email address<input name="email" required type="email" autocomplete="username" placeholder="you@example.com"></label><label>Password<input name="password" required type="password" minlength="8" autocomplete="${signup ? 'new-password' : 'current-password'}" placeholder="At least 8 characters"></label>${signup ? '<label>Confirm password<input name="confirm" required type="password" minlength="8" autocomplete="new-password" placeholder="Repeat password"></label>' : ''}<button class="button button-primary" type="submit">${signup ? 'Create local account' : 'Sign in'}<i data-lucide="arrow-right"></i></button><p data-account-status role="status" aria-live="polite"></p></form><div class="auth-switch">${signup ? 'Already have an account?' : 'New to Flavoro?'} <a href="/pages/${signup ? 'login' : 'signup'}.html">${signup ? 'Sign in' : 'Create account'}</a></div></div></div></main>`
 }
 
 export function renderPage(page) {
- const pages = { home, about, menu, gallery, reservations, blog, contact, login: () => auth('login'), signup: () => auth('signup'), notFound }
+ const pages = { home, about, menu, gallery, reservations, blog, contact, checkout, 'private-dining': privateDining, visit, people, ...Object.fromEntries(Object.keys(articles).map(key => [key, () => journalArticle(key)])), ...Object.fromEntries(['privacy','terms','accessibility','reservation-confirmation','order-confirmation'].map(key => [key, () => infoPage(key)])), login: () => auth('login'), signup: () => auth('signup'), notFound }
  return (pages[page] || home)()
 }

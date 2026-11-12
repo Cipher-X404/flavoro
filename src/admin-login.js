@@ -1,0 +1,17 @@
+import './dashboard.css'
+import { gsap } from 'gsap'
+import { createIcons, Sparkles, ArrowUpRight, ShieldCheck, ArrowLeft, LockKeyhole } from 'lucide'
+import { hasAccount, login, register, isSignedIn } from './local-auth.js'
+const root = document.querySelector('#admin-auth')
+if (isSignedIn('admin')) location.replace('/pages/admin-dashboard.html')
+const setup = !hasAccount('admin')
+root.innerHTML = `<main class="studio-auth"><div class="studio-auth-art"><a href="/index.html" class="studio-auth-brand">flavoro <i data-lucide="sparkles"></i><small>STUDIO</small></a><div class="studio-art-content"><span>THE SPACE BEHIND THE EXPERIENCE / 01</span><h1>Every detail<br>has a <em>story.</em></h1><p>A quiet place to shape the moments that bring people together.</p></div><div class="studio-art-foot"><span>FLAVORO STUDIO</span><span>MADE WITH INTENTION</span></div></div><div class="studio-auth-panel"><a class="studio-back" href="/index.html"><i data-lucide="arrow-left"></i> BACK TO FLAVORO</a><div class="studio-auth-box"><span class="studio-auth-eyebrow"><i data-lucide="shield-check"></i> PRIVATE WORKSPACE / LOCAL PREVIEW</span><h2>${setup ? 'Let’s begin<br><em>behind the scenes.</em>' : 'Welcome<br><em>back to the studio.</em>'}</h2><p>${setup ? 'Set up the one local administrator for this browser.' : 'Sign in to your local administrator preview.'}</p><div class="studio-auth-warning">This is a browser-only demo, not secure authentication. Do not use a real password. Clearing browser storage resets setup.</div><form id="admin-auth-form"><label>Email address<input type="email" name="email" autocomplete="username" required placeholder="you@example.com"></label><label>Password<input type="password" name="password" autocomplete="${setup ? 'new-password' : 'current-password'}" minlength="8" required placeholder="At least 8 characters"></label>${setup ? '<label>Confirm password<input type="password" name="confirm" autocomplete="new-password" minlength="8" required placeholder="Repeat password"></label>' : ''}<button type="submit" class="studio-auth-submit">${setup ? 'Create local admin' : 'Enter the studio'} <i data-lucide="arrow-up-right"></i></button><p class="studio-auth-status" role="status" aria-live="polite"></p></form><div class="studio-auth-caption"><i data-lucide="lock-keyhole"></i> ${setup ? 'One local admin account per browser.' : 'Your account exists only in this browser.'}</div></div></div></main>`
+createIcons({ icons: { Sparkles, ArrowUpRight, ShieldCheck, ArrowLeft, LockKeyhole } })
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.from('.studio-auth-box > *', { y:16, opacity:0, stagger:.07, duration:.65, ease:'power3.out' })
+root.querySelector('form').addEventListener('submit', async event => {
+ event.preventDefault(); const form = event.currentTarget, data = new FormData(form), status = form.querySelector('[role=status]'), button = form.querySelector('button')
+ if (setup && data.get('password') !== data.get('confirm')) { status.textContent = 'Passwords do not match.'; return }
+ button.disabled = true; status.textContent = 'Please wait…'
+ try { await (setup ? register('admin', data.get('email'), data.get('password')) : login('admin', data.get('email'), data.get('password'))); location.assign('/pages/admin-dashboard.html') }
+ catch (error) { status.textContent = error.message || 'Could not complete sign in.'; button.disabled = false }
+})

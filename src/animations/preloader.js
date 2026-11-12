@@ -45,6 +45,7 @@ export function initPreloader({ words = FLAVORO_WORDS, minDuration = 1800, maxDu
   const root = document.getElementById('flavoro-preloader')
   const progress = root.querySelector('.js-progress')
   const word = root.querySelector('.js-words')
+  const cloche = root.querySelector('.loader-cloche')
   const paths = [...root.querySelectorAll('.loader-drawing path')]
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   paths.forEach(path => { const length = path.getTotalLength(); gsap.set(path, { strokeDasharray: length, strokeDashoffset: length }) })
@@ -79,10 +80,10 @@ export function initPreloader({ words = FLAVORO_WORDS, minDuration = 1800, maxDu
     }
     outro = gsap.timeline({ onComplete: destroy })
       .to([root.querySelector('.js-type'), ...root.querySelectorAll('.js-stagger')], { autoAlpha: 0, duration: .35, stagger: .04 })
+      .set(cloche, { autoAlpha: 1 })
       .to(paths, { strokeDashoffset: 0, duration: 1.05, stagger: .09, ease: 'power2.inOut' }, '-=.05')
-      .to(root.querySelector('.loader-cloche'), { scale: 1.12, duration: .35, ease: 'power2.inOut' }, '-=.1')
-      .call(() => onReveal?.())
-      .to(root, { autoAlpha: 0, duration: .65, ease: 'power2.inOut' })
+      .to(cloche, { scale: 8, duration: 1.05, ease: 'power3.in', onStart: () => onReveal?.() }, '+=.1')
+      .to(root, { autoAlpha: 0, duration: .55, ease: 'power2.inOut' }, '-=.55')
   }
   function destroy() {
     if (destroyed) return

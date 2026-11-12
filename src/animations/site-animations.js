@@ -24,7 +24,7 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
       .from('.hero-overline', { y: 20, opacity: 0, duration: .8 }, '-=1.3')
       .from('.hero-title span', { yPercent: 45, opacity: 0, stagger: .16, duration: 1.2 }, '-=1')
       .to(flourish, { strokeDashoffset: 0, duration: 1.5, stagger: .15, ease: 'power2.inOut' }, '-=.8')
-      .from('.hero-bottom-copy > *, .hero-seal, .hero-footer-line', { y: 20, opacity: 0, stagger: .12, duration: .8 }, '-=.7')
+      .from('.hero-bottom-copy > *, .hero-orbit, .hero-footer-line', { y: 20, opacity: 0, stagger: .12, duration: .8 }, '-=.7')
   } else {
     heroTl.from('.page-hero-bg', { scale: 1.12, duration: 1.8 })
       .from('.page-hero .hero-kicker', { y: 24, opacity: 0, duration: .7 }, '-=1.05')
