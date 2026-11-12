@@ -15,14 +15,22 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
   }
 
   const heroTl = gsap.timeline({ paused: !autoPlayHero, defaults: { ease: 'power3.out' } })
-  heroTl.from('.hero-bg, .page-hero-bg', { scale: 1.12, duration: 1.8 })
-    .from('.hero-status-hud', { y: -20, opacity: 0, duration: .75 }, '-=1.3')
-    .from('.hero-kicker-strip, .hero-kicker', { y: 24, opacity: 0, duration: .7 }, '-=1.05')
-    .from('.split-title', { yPercent: 25, opacity: 0, duration: 1 }, '-=.65')
-    .from('.hero-manifesto, .hero-content p, .page-hero-content p', { y: 22, opacity: 0, duration: .7 }, '-=.55')
-    .from('.hero-actions > *', { y: 18, opacity: 0, stagger: .09, duration: .6 }, '-=.4')
-    .from('.sensory-card', { x: 30, opacity: 0, stagger: .1, duration: .65 }, '-=.45')
-    .from('.hero-dock-bar', { y: 20, opacity: 0, duration: .6 }, '-=.35')
+  const homeHero = document.querySelector('.home-hero')
+  if (homeHero) {
+    const flourish = document.querySelectorAll('.hero-flourish path')
+    flourish.forEach(path => { const length = path.getTotalLength(); gsap.set(path, { strokeDasharray: length, strokeDashoffset: length }) })
+    heroTl.from('.home-hero .hero-bg', { scale: 1.1, duration: 2.2, ease: 'power2.out' })
+      .from('.hero-frame', { opacity: 0, scale: .97, duration: 1.2 }, '-=1.7')
+      .from('.hero-overline', { y: 20, opacity: 0, duration: .8 }, '-=1.3')
+      .from('.hero-title span', { yPercent: 45, opacity: 0, stagger: .16, duration: 1.2 }, '-=1')
+      .to(flourish, { strokeDashoffset: 0, duration: 1.5, stagger: .15, ease: 'power2.inOut' }, '-=.8')
+      .from('.hero-bottom-copy > *, .hero-seal, .hero-footer-line', { y: 20, opacity: 0, stagger: .12, duration: .8 }, '-=.7')
+  } else {
+    heroTl.from('.page-hero-bg', { scale: 1.12, duration: 1.8 })
+      .from('.page-hero .hero-kicker', { y: 24, opacity: 0, duration: .7 }, '-=1.05')
+      .from('.page-hero .split-title', { yPercent: 25, opacity: 0, duration: 1 }, '-=.65')
+      .from('.page-hero-content p', { y: 22, opacity: 0, duration: .7 }, '-=.55')
+  }
 
   gsap.utils.toArray('[data-parallax]').forEach((section) => {
     const image = section.querySelector('.hero-bg, .page-hero-bg')
