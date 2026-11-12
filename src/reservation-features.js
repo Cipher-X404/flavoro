@@ -275,78 +275,28 @@ function renderReservationLiveMenu(container) {
 function setupReservationFormSubmission() {
   const form = document.querySelector('#reservation-booking-form')
   if (!form) return
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault()
-
-    const name = form.querySelector('[name="name"]')?.value || 'Valued Guest'
-    const email = form.querySelector('[name="email"]')?.value || ''
-    const date = form.querySelector('[name="date"]')?.value || 'Upcoming Date'
-    const time = form.querySelector('[name="time"]')?.value || '7:00 PM'
-    const party = form.querySelector('[name="party"]')?.value || '2 guests'
-    const setting = form.querySelector('[name="setting"]')?.value || 'Main Dining Room'
-    const special = form.querySelector('[name="notes"]')?.value || 'None'
-
-    const resCode = `FLV-${Math.floor(1000 + Math.random() * 9000)}`
-
-    const exp = reservationMenuData.experiences.find((e) => e.id === selectedExperience)
-    const menuDesc = selectedExperience === 'tasting' ? 'Chef Amara 7-Course Seasonal Tasting' :
-      selectedExperience === 'feasting' ? 'Hearthside Communal Family Feast' :
-      `${curatedCourses.starter} | ${curatedCourses.main} | ${curatedCourses.dessert} (${curatedCourses.pairing})`
-
-    // Open Reservation Confirmation Modal
-    let modal = document.querySelector('#reservation-confirmation-modal')
-    if (!modal) {
-      modal = document.createElement('div')
-      modal.id = 'reservation-confirmation-modal'
-      modal.className = 'flavoro-modal'
-      document.body.appendChild(modal)
+  const date = form.querySelector('[name="date"]')
+  if (date) { const now = new Date(); date.min = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}` }
+  form.addEventListener('submit', event => {
+    event.preventDefault()
+    const data = new FormData(form)
+    const trigger = document.activeElement
+    const overlay = document.createElement('div')
+    overlay.className = 'booking-review-overlay'
+    overlay.innerHTML = `<section class="booking-review-card" role="dialog" aria-modal="true" aria-labelledby="booking-review-title" aria-describedby="booking-review-desc"><button class="booking-review-close" type="button" aria-label="Close review">×</button><div class="booking-review-icon"><i data-lucide="calendar-days"></i></div><span class="eyebrow">YOUR TABLE / PREVIEW</span><h2 id="booking-review-title">A moment to <em>check.</em></h2><p id="booking-review-desc">Your selections are ready to review. This is not a confirmed reservation.</p><div class="booking-review-list"></div><div class="booking-review-notice"><i data-lucide="info"></i><span>Online booking is not connected. No request has been sent and availability is not live.</span></div><button class="button button-dark booking-review-done" type="button">Back to your selections</button></section>`
+    const list = overlay.querySelector('.booking-review-list')
+    for (const [label, key] of [['Guest','name'],['Email','email'],['Date','date'],['Preferred time','time'],['Party size','party'],['Setting','setting']]) {
+      const row = document.createElement('div'), title = document.createElement('span'), value = document.createElement('strong')
+      title.textContent = label; value.textContent = data.get(key) || '—'; row.append(title, value); list.append(row)
     }
-
-    modal.innerHTML = `
-      <div class="modal-backdrop"></div>
-      <div class="modal-dialog receipt-dialog">
-        <button type="button" class="modal-close" aria-label="Close modal"><i data-lucide="x"></i></button>
-        <div class="receipt-header">
-          <div class="receipt-brand">
-            <i data-lucide="calendar-days"></i>
-            <span>Flavoro Table Reservation</span>
-          </div>
-          <h2>Table & Menu Confirmed</h2>
-          <span class="receipt-ticket">CONFIRMATION #${resCode}</span>
-          <p>We are excited to welcome you. Your table and pre-selected live menu have been scheduled with our kitchen team.</p>
-        </div>
-
-        <div class="receipt-meta-box">
-          <div><span>Guest:</span><b>${name}</b></div>
-          <div><span>Date & Time:</span><b>${date} at ${time}</b></div>
-          <div><span>Party:</span><b>${party}</b></div>
-          <div><span>Setting:</span><b>${setting}</b></div>
-        </div>
-
-        <div class="res-confirmed-menu-box">
-          <span class="eyebrow" style="margin-bottom:6px;"><i data-lucide="utensils"></i> Live Menu Pre-Selected</span>
-          <h4>${exp.name}</h4>
-          <p>${menuDesc}</p>
-          ${special !== 'None' ? `<small><b>Special Note:</b> ${special}</small>` : ''}
-        </div>
-
-        <div class="receipt-actions" style="margin-top:24px;">
-          <button type="button" class="button button-primary" id="btn-close-res-confirm">
-            <i data-lucide="check"></i> <span>Add to Calendar & Finish</span>
-          </button>
-        </div>
-      </div>
-    `
-
-    initializeIcons()
-
-    modal.classList.add('is-open')
-    modal.querySelector('.modal-backdrop')?.addEventListener('click', () => modal.classList.remove('is-open'))
-    modal.querySelector('.modal-close')?.addEventListener('click', () => modal.classList.remove('is-open'))
-    modal.querySelector('#btn-close-res-confirm')?.addEventListener('click', () => {
-      modal.classList.remove('is-open')
-      form.reset()
+    const close = () => { overlay.remove(); document.body.classList.remove('modal-open'); trigger?.focus() }
+    overlay.querySelector('.booking-review-close').addEventListener('click', close)
+    overlay.querySelector('.booking-review-done').addEventListener('click', close)
+    overlay.addEventListener('click', e => { if (e.target === overlay) close() })
+    overlay.addEventListener('keydown', e => {
+      if (e.key === 'Escape') close()
+      if (e.key === 'Tab') { const buttons = [...overlay.querySelectorAll('button')]; if (e.shiftKey && document.activeElement === buttons[0]) { e.preventDefault(); buttons.at(-1).focus() } else if (!e.shiftKey && document.activeElement === buttons.at(-1)) { e.preventDefault(); buttons[0].focus() } }
     })
+    document.body.append(overlay); document.body.classList.add('modal-open'); initializeIcons(); overlay.querySelector('.booking-review-close').focus()
   })
 }

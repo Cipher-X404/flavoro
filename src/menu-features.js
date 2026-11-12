@@ -1,5 +1,8 @@
 import { menuItems } from './menu-data.js'
+import { getMenu } from './dashboard-data.js'
 import { initializeIcons } from './icons.js'
+
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 
 // Order state
 let order = []
@@ -49,8 +52,14 @@ const scratchStudioState = {
 }
 
 export function initMenuFeatures() {
+  const managedMenu = getMenu()
+  menuItems.splice(0, menuItems.length, ...managedMenu)
   setupModeSwitcher()
   renderAuthenticDiningCarte()
+  setupCarteFilters()
+  if (/^#act-(morning|midday|evening|confections)$/.test(window.location.hash)) {
+    requestAnimationFrame(() => document.querySelector(window.location.hash)?.scrollIntoView())
+  }
   renderHearthOrderList()
   setupFilterControls()
   setupCustomizationModal()
@@ -186,6 +195,7 @@ function renderAuthenticDiningCarte() {
 
           return `
             <article class="authentic-menu-row" data-dish-id="${dish.id}" data-dish-name="${dish.name}" data-dish-image="${dish.image}" data-dish-badge="${dish.badge}" data-dish-pairing="${dish.pairing}">
+              <img class="menu-row-mobile-image" src="${dish.image}" alt="" loading="lazy" decoding="async">
               <div class="menu-row-lead">
                 <span class="menu-row-num">№ ${itemNum}</span>
                 <div class="menu-row-info">
@@ -193,7 +203,7 @@ function renderAuthenticDiningCarte() {
                     <h4 class="menu-dish-name">${dish.name}</h4>
                     <div class="menu-diet-wrap">${dietBadges}</div>
                     <span class="menu-leader-dots" aria-hidden="true"></span>
-                    <strong class="menu-dish-price">$${dish.price}.00</strong>
+                    <strong class="menu-dish-price">$${Number(dish.price).toFixed(2)}</strong>
                   </div>
                   
                   <p class="menu-dish-ingredients">${dish.description}</p>
@@ -239,6 +249,32 @@ function renderAuthenticDiningCarte() {
   })
 
   initializeIcons()
+}
+
+function setupCarteFilters() {
+  const search = document.querySelector('#carte-search')
+  const controls = [...document.querySelectorAll('[data-carte-filter]')]
+  const status = document.querySelector('#carte-filter-status')
+  let diet = 'all'
+  const apply = () => {
+    const query = search.value.trim().toLowerCase()
+    let count = 0
+    document.querySelectorAll('.authentic-menu-row').forEach(row => {
+      const dish = menuItems.find(item => item.id === row.dataset.dishId)
+      const matches = dish && (diet === 'all' || dish.diet.includes(diet)) && `${dish.name} ${dish.description} ${dish.ingredients.map(i => i.name).join(' ')}`.toLowerCase().includes(query)
+      row.hidden = !matches
+      if (matches) count++
+    })
+    document.querySelectorAll('.carte-act-block').forEach(block => { block.hidden = !block.querySelector('.authentic-menu-row:not([hidden])') })
+    if (status) status.textContent = `${count} ${count === 1 ? 'dish' : 'dishes'} found${count ? '' : ' — try another search or filter'}.`
+  }
+  search?.addEventListener('input', apply)
+  controls.forEach(button => button.addEventListener('click', () => {
+    diet = button.dataset.carteFilter
+    controls.forEach(item => item.setAttribute('aria-pressed', String(item === button)))
+    apply()
+  }))
+  if (search) apply()
 }
 
 // -------------------------------------------------------------
@@ -380,7 +416,7 @@ function renderHearthOrderList() {
             <div class="order-row-heading">
               <h4 class="order-dish-title">${dish.name}</h4>
               <div class="order-diet-group">${dietBadges}</div>
-              <span class="order-dish-price">$${dish.price}.00</span>
+              <span class="order-dish-price">$${Number(dish.price).toFixed(2)}</span>
             </div>
             
             <p class="order-dish-desc">${dish.description}</p>
@@ -401,7 +437,7 @@ function renderHearthOrderList() {
             <button type="button" class="btn-fire-order btn-quick-order" data-quick-add-id="${dish.id}">
               <div class="btn-text-pair">
                 <strong class="btn-action-name"><i data-lucide="plus"></i> Quick Order</strong>
-                <small class="btn-subtext">Standard Recipe • $${dish.price}.00</small>
+                <small class="btn-subtext">Standard Recipe • $${Number(dish.price).toFixed(2)}</small>
               </div>
             </button>
 
@@ -505,6 +541,16 @@ function resetFilters() {
 // ("What user DOES NOT want added" + "What user DOES want added")
 // -------------------------------------------------------------
 let customizeModal
+let customizationTrigger
+let drawerTrigger
+function trapDialogFocus(event, dialog) {
+  if (event.key !== 'Tab') return
+  const focusable = [...dialog.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])')].filter(el => el.getClientRects().length && !el.closest('[aria-hidden="true"]'))
+  if (!focusable.length) { event.preventDefault(); return }
+  const first = focusable[0], last = focusable[focusable.length - 1]
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+}
 
 function setupCustomizationModal() {
   customizeModal = document.querySelector('#quick-view-modal')
@@ -514,8 +560,9 @@ function setupCustomizationModal() {
   customizeModal.querySelector('.modal-close')?.addEventListener('click', closeCustomizationModal)
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && customizeModal.classList.contains('is-open')) {
-      closeCustomizationModal()
+    if (customizeModal.classList.contains('is-open')) {
+      if (e.key === 'Escape') closeCustomizationModal()
+      else trapDialogFocus(e, customizeModal)
     }
   })
 }
@@ -524,6 +571,7 @@ export function openCustomizationModal(dishId) {
   const dish = menuItems.find((d) => d.id === dishId)
   if (!dish || !customizeModal) return
 
+  customizationTrigger = document.activeElement
   activeDish = dish
   customModalState = {
     excludedIngredients: [],
@@ -535,13 +583,17 @@ export function openCustomizationModal(dishId) {
 
   renderCustomizationModalContent()
   customizeModal.classList.add('is-open')
+  customizeModal.setAttribute('aria-hidden', 'false')
   document.body.classList.add('modal-open')
+  customizeModal.querySelector('.modal-close')?.focus()
 }
 
 export function closeCustomizationModal() {
   if (customizeModal) {
     customizeModal.classList.remove('is-open')
+    customizeModal.setAttribute('aria-hidden', 'true')
     document.body.classList.remove('modal-open')
+    customizationTrigger?.focus()
   }
 }
 
@@ -929,7 +981,7 @@ function setupCustomStudio() {
           <div class="preview-ticket-footer">
             <div class="ticket-total">
               <small>Calculated Plate Price</small>
-              <strong>$${totalCustomPrice}.00</strong>
+              <strong>$${Number(totalCustomPrice).toFixed(2)}</strong>
             </div>
             <button type="button" class="button button-primary" id="btn-fire-bespoke-plate">
               <i data-lucide="flame"></i> <span>Fire Bespoke Plate to Order Bag</span>
@@ -998,7 +1050,7 @@ function setupCustomStudio() {
         basePrice: totalCustomPrice,
         price: totalCustomPrice,
         qty: 1,
-        image: '/images/hero.jpg',
+        image: '/images/hero-pasta.jpg',
         isCustomized: true,
         excludedIngredients: [...scratchStudioState.dislikes],
         selectedAddons: [{ name: scratchStudioState.sauce, price: scratchStudioState.saucePrice }],
@@ -1008,7 +1060,7 @@ function setupCustomStudio() {
 
       order.push(customItem)
       saveOrder()
-      showToast(`Added your Bespoke Hearth Creation ($${totalCustomPrice}.00) to order!`, 'View Order', openOrderDrawer)
+      showToast(`Added your Bespoke Hearth Creation ($${Number(totalCustomPrice).toFixed(2)}) to order!`, 'View Order', openOrderDrawer)
     })
   }
 
@@ -1059,13 +1111,10 @@ export function showToast(message, actionText = 'View Order', actionCallback = n
 
   const toast = document.createElement('div')
   toast.className = 'flavoro-toast'
-  toast.innerHTML = `
-    <div class="toast-content">
-      <i data-lucide="check-circle-2"></i>
-      <span>${message}</span>
-    </div>
-    ${actionCallback ? `<button class="toast-action" type="button">${actionText}</button>` : ''}
-  `
+  toast.setAttribute('role', 'status')
+  toast.innerHTML = `<div class="toast-content"><i data-lucide="check-circle-2"></i><span></span></div>${actionCallback ? '<button class="toast-action" type="button"></button>' : ''}`
+  toast.querySelector('.toast-content span').textContent = message
+  if (actionCallback) toast.querySelector('.toast-action').textContent = actionText
 
   toastContainer.appendChild(toast)
   initializeIcons()
@@ -1096,6 +1145,7 @@ function setupOrderDrawer() {
 
   orderDrawer.querySelector('.drawer-backdrop')?.addEventListener('click', closeOrderDrawer)
   orderDrawer.querySelector('.drawer-close')?.addEventListener('click', closeOrderDrawer)
+  orderDrawer.addEventListener('keydown', event => { if (event.key === 'Escape') closeOrderDrawer(); else trapDialogFocus(event, orderDrawer) })
 
   document.querySelectorAll('.open-order-bag-btn').forEach((btn) => {
     btn.addEventListener('click', openOrderDrawer)
@@ -1127,16 +1177,21 @@ function setupOrderDrawer() {
 
 export function openOrderDrawer() {
   if (orderDrawer) {
+    drawerTrigger = document.activeElement
     renderOrderDrawer()
     orderDrawer.classList.add('is-open')
+    orderDrawer.setAttribute('aria-hidden', 'false')
     document.body.classList.add('drawer-open')
+    orderDrawer.querySelector('.drawer-close')?.focus()
   }
 }
 
 export function closeOrderDrawer() {
   if (orderDrawer) {
     orderDrawer.classList.remove('is-open')
+    orderDrawer.setAttribute('aria-hidden', 'true')
     document.body.classList.remove('drawer-open')
+    drawerTrigger?.focus()
   }
 }
 
@@ -1149,7 +1204,7 @@ function updateCartBadge() {
   })
 
   document.querySelectorAll('.order-bag-total').forEach((el) => {
-    el.textContent = `$${totalPrice}.00`
+    el.textContent = `$${totalPrice.toFixed(2)}`
   })
 
   document.querySelectorAll('.floating-order-bag').forEach((el) => {
@@ -1191,14 +1246,7 @@ function renderOrderDrawer() {
   if (checkoutBtn) checkoutBtn.removeAttribute('disabled')
 
   const subtotal = order.reduce((sum, item) => sum + item.price * item.qty, 0)
-  const tax = Math.round(subtotal * 0.08 * 100) / 100
-  const gratuity = Math.round(subtotal * 0.10 * 100) / 100
-  const grandTotal = (subtotal + tax + gratuity).toFixed(2)
-
-  if (subtotalEl) subtotalEl.textContent = `$${subtotal}.00`
-  if (taxEl) taxEl.textContent = `$${tax.toFixed(2)}`
-  if (gratuityEl) gratuityEl.textContent = `$${gratuity.toFixed(2)}`
-  if (grandTotalEl) grandTotalEl.textContent = `$${grandTotal}`
+  if (subtotalEl) subtotalEl.textContent = `$${subtotal.toFixed(2)}`
 
   itemsList.innerHTML = order.map((item, index) => {
     const hasExcluded = item.excludedIngredients && item.excludedIngredients.length > 0
@@ -1206,10 +1254,10 @@ function renderOrderDrawer() {
 
     return `
       <div class="drawer-item-row ${item.isCustomized ? 'is-custom-item' : ''}">
-        <img class="drawer-item-thumb" src="${item.image}" alt="${item.name}">
+        <img class="drawer-item-thumb" src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">
         <div class="drawer-item-info">
           <div class="drawer-item-head">
-            <h4>${item.name}</h4>
+            <h4>${escapeHtml(item.name)}</h4>
             <button type="button" class="btn-remove-item" data-remove-index="${index}" aria-label="Remove item">
               <i data-lucide="trash-2"></i>
             </button>
@@ -1220,30 +1268,30 @@ function renderOrderDrawer() {
             ${hasExcluded ? `
               <div class="spec-excluded">
                 <span class="spec-label">Do Not Add:</span>
-                <b>${item.excludedIngredients.join(', ')}</b>
+                <b>${escapeHtml(item.excludedIngredients.join(', '))}</b>
               </div>
             ` : ''}
 
             ${hasAddons ? `
               <div class="spec-added">
                 <span class="spec-label">Added Extras:</span>
-                <b>${item.selectedAddons.map((a) => `${a.name} (+$${a.price})`).join(', ')}</b>
+                <b>${item.selectedAddons.map((a) => `${escapeHtml(a.name)} (+$${Number(a.price).toFixed(2)})`).join(', ')}</b>
               </div>
             ` : ''}
 
             <div class="spec-prep">
-              <span>Spice: <b>${item.spice || 'Medium'}</b></span>
-              ${item.notes ? `<span> · Note: <em>${item.notes}</em></span>` : ''}
+              <span>Spice: <b>${escapeHtml(item.spice || 'Medium')}</b></span>
+              ${item.notes ? `<span> · Note: <em>${escapeHtml(item.notes)}</em></span>` : ''}
             </div>
           </div>
 
           <div class="drawer-item-footer">
             <div class="item-qty-stepper">
-              <button type="button" class="btn-item-qty" data-qty-change="${index}" data-delta="-1"><i data-lucide="minus"></i></button>
+              <button type="button" class="btn-item-qty" data-qty-change="${index}" data-delta="-1" aria-label="Decrease quantity of ${escapeHtml(item.name)}"><i data-lucide="minus"></i></button>
               <span>${item.qty}</span>
-              <button type="button" class="btn-item-qty" data-qty-change="${index}" data-delta="1"><i data-lucide="plus"></i></button>
+              <button type="button" class="btn-item-qty" data-qty-change="${index}" data-delta="1" aria-label="Increase quantity of ${escapeHtml(item.name)}"><i data-lucide="plus"></i></button>
             </div>
-            <strong class="item-line-total">$${item.price * item.qty}.00</strong>
+            <strong class="item-line-total">$${(Number(item.price) * Number(item.qty)).toFixed(2)}</strong>
           </div>
         </div>
       </div>
@@ -1277,91 +1325,6 @@ function renderOrderDrawer() {
 }
 
 function submitOrderToKitchen() {
-  if (order.length === 0) return
-
-  const tableInput = orderDrawer?.querySelector('#dine-in-table-number')
-  const pickupTimeInput = orderDrawer?.querySelector('#pickup-time-select')
-  const guestNameInput = orderDrawer?.querySelector('#order-guest-name')
-
-  const guestName = guestNameInput?.value.trim() || 'Honored Guest'
-  const tableVal = diningMode === 'dine-in' ? (tableInput?.value.trim() || 'Table 07') : 'Takeaway Pre-Order'
-  const pickupTime = diningMode === 'pickup' ? (pickupTimeInput?.value || 'Next Available Slot') : 'Immediate Fire'
-
-  const ticketId = `FLV-${Math.floor(1000 + Math.random() * 9000)}`
-  const subtotal = order.reduce((sum, item) => sum + item.price * item.qty, 0)
-  const tax = Math.round(subtotal * 0.08 * 100) / 100
-  const gratuity = Math.round(subtotal * 0.10 * 100) / 100
-  const grandTotal = (subtotal + tax + gratuity).toFixed(2)
-
-  let receiptModal = document.querySelector('#order-receipt-modal')
-  if (!receiptModal) {
-    receiptModal = document.createElement('div')
-    receiptModal.id = 'order-receipt-modal'
-    receiptModal.className = 'flavoro-modal'
-    document.body.appendChild(receiptModal)
-  }
-
-  receiptModal.innerHTML = `
-    <div class="modal-backdrop"></div>
-    <div class="modal-dialog receipt-dialog">
-      <button type="button" class="modal-close" aria-label="Close receipt"><i data-lucide="x"></i></button>
-      <div class="receipt-header">
-        <div class="receipt-brand">
-          <i data-lucide="utensils-crossed"></i>
-          <span>Flavoro Live Hearth Order</span>
-        </div>
-        <h2>Order Dispatched to Hearth</h2>
-        <span class="receipt-ticket">KITCHEN TICKET #${ticketId}</span>
-        <p>Chef Amara and the kitchen pass have received your customized dish selections.</p>
-      </div>
-
-      <div class="receipt-meta-box">
-        <div><span>Guest:</span><b>${guestName}</b></div>
-        <div><span>Destination:</span><b>${tableVal}</b></div>
-        <div><span>Service:</span><b>${pickupTime}</b></div>
-        <div><span>Status:</span><b style="color:var(--orange);">Fired on Charcoal</b></div>
-      </div>
-
-      <div class="receipt-items-list">
-        ${order.map((item) => `
-          <div class="receipt-item-line">
-            <div>
-              <strong>${item.name}</strong>
-              ${item.excludedIngredients && item.excludedIngredients.length ? `<small style="color:#b23b14;">Without: ${item.excludedIngredients.join(', ')}</small>` : ''}
-              ${item.selectedAddons && item.selectedAddons.length ? `<small style="color:var(--orange);">Added: ${item.selectedAddons.map(a => a.name).join(', ')}</small>` : ''}
-              <small>Qty: ${item.qty} · Spice: ${item.spice || 'Medium'}</small>
-            </div>
-            <b>$${item.price * item.qty}.00</b>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="receipt-summary">
-        <div><span>Food & Drink Subtotal:</span><b>$${subtotal}.00</b></div>
-        <div><span>Hospitality Tax (8%):</span><b>$${tax.toFixed(2)}</b></div>
-        <div><span>Kitchen Gratuity (10%):</span><b>$${gratuity.toFixed(2)}</b></div>
-        <div class="receipt-grand-total"><span>Total Bill:</span><b>$${grandTotal}</b></div>
-      </div>
-
-      <div class="receipt-actions">
-        <button type="button" class="button button-primary" id="btn-finish-order">
-          <i data-lucide="check"></i> <span>Done — Enjoy Your Feast</span>
-        </button>
-      </div>
-    </div>
-  `
-
-  initializeIcons()
-
-  receiptModal.classList.add('is-open')
-  receiptModal.querySelector('.modal-backdrop')?.addEventListener('click', () => receiptModal.classList.remove('is-open'))
-  receiptModal.querySelector('.modal-close')?.addEventListener('click', () => receiptModal.classList.remove('is-open'))
-  receiptModal.querySelector('#btn-finish-order')?.addEventListener('click', () => {
-    receiptModal.classList.remove('is-open')
-  })
-
-  // Clear cart
-  order = []
-  saveOrder()
-  closeOrderDrawer()
+  if (!order.length) return
+  window.location.assign('/pages/checkout.html')
 }
