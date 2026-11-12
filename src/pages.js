@@ -332,7 +332,9 @@ function menu() {
  <div id="dish-view-modal" class="flavoro-modal dish-view-modal" role="dialog" aria-modal="true" aria-label="View dish details" aria-hidden="true">
    <div class="modal-backdrop"></div>
    <div class="modal-dialog dish-view-dialog">
-     <button type="button" class="modal-close" aria-label="Close modal"><i data-lucide="x"></i></button>
+     <button type="button" class="modal-close dish-view-close-btn" aria-label="Close modal">
+       <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+     </button>
      <div class="dish-view-body"></div>
    </div>
  </div>

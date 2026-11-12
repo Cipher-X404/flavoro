@@ -683,6 +683,14 @@ function setupDishViewModal() {
         return
       }
     }
+
+    const closeBtn = e.target.closest('.dish-view-inner-close, .dish-view-dismiss-btn, .dish-view-close-btn')
+    if (closeBtn) {
+      e.preventDefault()
+      e.stopPropagation()
+      closeDishViewModal()
+      return
+    }
   })
 }
 
@@ -758,6 +766,9 @@ function openDishViewModal(dishId) {
           <button type="button" class="button button-dark dish-view-trigger-custom" data-dish-id="${dish.id}">
             <i data-lucide="sliders-horizontal"></i> <span>Customize Ingredients</span>
           </button>
+          <button type="button" class="button button-ghost dish-view-dismiss-btn">
+            <i data-lucide="x"></i> <span>Close Details</span>
+          </button>
         </div>
       </div>
     </div>
@@ -771,6 +782,7 @@ function openDishViewModal(dishId) {
     closeDishViewModal()
     openCustomizationModal(dish.id)
   })
+  body.querySelector('.dish-view-dismiss-btn')?.addEventListener('click', closeDishViewModal)
 
   dishViewModal.classList.add('is-open')
   dishViewModal.setAttribute('aria-hidden', 'false')

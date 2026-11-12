@@ -2389,26 +2389,39 @@ html{overflow-x:clip}@media(max-width:1050px){.mobile-menu{visibility:hidden;poi
 /* ==========================================================================
    Dish Detail View Modal (Image, Full Info, Ingredients, Cellar Pairing & Notes)
    ========================================================================== */
+.dish-view-modal {
+  padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .dish-view-dialog {
-  max-width: 900px;
-  width: min(900px, calc(100vw - 32px));
+  position: relative;
+  max-width: 860px;
+  width: min(860px, calc(100vw - 32px));
+  max-height: 88vh;
   background: #fff;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(248, 138, 8, 0.25);
+  display: flex;
+  flex-direction: column;
 }
 
 .dish-view-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
-  min-height: 520px;
+  grid-template-columns: 360px 1fr;
+  height: 100%;
+  max-height: 88vh;
+  overflow: hidden;
 }
 
 .dish-view-image-wrap {
   position: relative;
   background: #17130f;
-  min-height: 340px;
+  height: 100%;
+  min-height: 100%;
   overflow: hidden;
 }
 
@@ -2432,16 +2445,58 @@ html{overflow-x:clip}@media(max-width:1050px){.mobile-menu{visibility:hidden;poi
   text-transform: uppercase;
   letter-spacing: 0.08em;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+}
+
+/* Floating High-Contrast Close Button in Modal */
+.dish-view-inner-close,
+.dish-view-dialog .modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(18, 14, 11, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 0;
+}
+
+.dish-view-inner-close:hover,
+.dish-view-dialog .modal-close:hover {
+  background: var(--orange);
+  color: #fff;
+  border-color: var(--orange);
+  transform: scale(1.08);
+}
+
+.dish-view-inner-close svg,
+.dish-view-dialog .modal-close svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  display: block;
 }
 
 .dish-view-info {
-  padding: 36px 32px 32px;
+  padding: 32px 30px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   background: #fff;
   overflow-y: auto;
-  max-height: 85vh;
+  -webkit-overflow-scrolling: touch;
+  max-height: 88vh;
 }
 
 .dish-view-topline {
@@ -2623,33 +2678,130 @@ html{overflow-x:clip}@media(max-width:1050px){.mobile-menu{visibility:hidden;poi
 
 .dish-view-actions {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 8px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
 
 .dish-view-actions button {
-  flex: 1;
+  flex: 1 1 180px;
   justify-content: center;
 }
 
+.dish-view-dismiss-btn {
+  border: 1px solid rgba(22, 16, 10, 0.2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dish-view-dismiss-btn:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Mobile Responsive Modal Restyling:
+   - Constrained, elegant width (not too broad, doesn't uncomfortably take over screen)
+   - Guaranteed visible high-contrast X button in image header
+   - All content scrolls smoothly inside dialog so NO details or buttons are cut off
+   ========================================================================== */
 @media (max-width: 768px) {
+  .dish-view-modal {
+    padding: 12px 14px;
+  }
+  
+  .dish-view-dialog {
+    width: min(440px, calc(100vw - 24px));
+    max-height: calc(100svh - 28px);
+    border-radius: 20px;
+    margin: auto;
+  }
+
   .dish-view-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: calc(100svh - 28px);
+    overflow: hidden;
   }
+
   .dish-view-image-wrap {
-    height: 220px;
-    min-height: auto;
+    height: 160px;
+    min-height: 160px;
+    max-height: 160px;
+    flex-shrink: 0;
+    width: 100%;
   }
+
+  .dish-view-inner-close,
+  .dish-view-dialog .modal-close {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: rgba(18, 14, 11, 0.9);
+  }
+
   .dish-view-info {
-    padding: 24px 20px;
+    padding: 18px 16px 20px;
+    gap: 14px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    max-height: none;
   }
+
+  .dish-view-title {
+    font-size: 24px;
+    line-height: 1.15;
+  }
+
+  .dish-view-price {
+    font-size: 22px;
+  }
+
+  .dish-view-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
   .dish-view-ingredients {
     grid-template-columns: 1fr;
+    gap: 5px;
   }
+
+  .dish-view-ingredients li {
+    font-size: 12px;
+  }
+
+  .dish-view-pairing {
+    padding: 10px 14px;
+  }
+
+  .dish-view-pairing p {
+    font-size: 12px;
+  }
+
+  .dish-view-chef-note {
+    padding: 14px 15px;
+  }
+
+  .dish-view-chef-note p {
+    font-size: 13px;
+  }
+
   .dish-view-actions {
     flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
+  }
+
+  .dish-view-actions button {
+    width: 100%;
+    min-height: 44px;
   }
 }
 
