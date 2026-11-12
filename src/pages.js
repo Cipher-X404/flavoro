@@ -91,7 +91,6 @@ function menu() {
  return `${pageHero('Seasonal · Expressive · Live-Fired', 'The living menu.<br><em>Taste with instinct.</em>', 'Explore our peak-season creations, browse the authentic dining room carte to reserve your table experience, or fire an instant custom order straight to our hearth pass.', img.hero, 'Menu')}
 
  <!-- Dual-Mode Switcher: Clean Separation of Reservation Dining Carte vs Live Order Pass -->
- <div class="experience-notice"><div class="container">MENU PREVIEW &nbsp; / &nbsp; Dishes, prices and ordering are illustrative. Orders are not sent to a kitchen.</div></div>
  <section class="menu-mode-switcher-bar">
    <div class="container mode-switcher-container">
      <div class="mode-switcher-capsule">
@@ -179,6 +178,9 @@ function menu() {
              </div>
            </div>
            <div class="tasting-row-actions">
+             <button type="button" class="carte-view-btn btn-view-dish" data-dish-id="tasting-7-course" title="View tasting details">
+               <i data-lucide="eye"></i> <span>View</span>
+             </button>
              <a href="/pages/reservations.html?experience=tasting" class="button button-primary">
                <i data-lucide="calendar-days"></i> <span>Reserve Table for Tasting</span>
              </a>
@@ -206,6 +208,9 @@ function menu() {
              </ul>
            </div>
            <div class="tasting-row-actions">
+             <button type="button" class="carte-view-btn btn-view-dish" data-dish-id="hearthside-feast" title="View feasting details">
+               <i data-lucide="eye"></i> <span>View</span>
+             </button>
              <a href="/pages/reservations.html?experience=feasting" class="button button-primary">
                <i data-lucide="calendar-days"></i> <span>Reserve Feasting Table</span>
              </a>
@@ -320,6 +325,15 @@ function menu() {
    <div class="modal-dialog quick-view-dialog">
      <button type="button" class="modal-close" aria-label="Close modal"><i data-lucide="x"></i></button>
      <div class="modal-body"></div>
+   </div>
+ </div>
+
+ <!-- Modal: Dish Detail View (Image + Full Info Popup) -->
+ <div id="dish-view-modal" class="flavoro-modal dish-view-modal" role="dialog" aria-modal="true" aria-label="View dish details" aria-hidden="true">
+   <div class="modal-backdrop"></div>
+   <div class="modal-dialog dish-view-dialog">
+     <button type="button" class="modal-close" aria-label="Close modal"><i data-lucide="x"></i></button>
+     <div class="dish-view-body"></div>
    </div>
  </div>
 

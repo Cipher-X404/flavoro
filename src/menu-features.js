@@ -63,6 +63,7 @@ export function initMenuFeatures() {
   renderHearthOrderList()
   setupFilterControls()
   setupCustomizationModal()
+  setupDishViewModal()
   setupCustomStudio()
   setupOrderDrawer()
   setupCarteHoverLoupe()
@@ -195,7 +196,10 @@ function renderAuthenticDiningCarte() {
 
           return `
             <article class="authentic-menu-row" data-dish-id="${dish.id}" data-dish-name="${dish.name}" data-dish-image="${dish.image}" data-dish-badge="${dish.badge}" data-dish-pairing="${dish.pairing}">
-              <img class="menu-row-mobile-image" src="${dish.image}" alt="" loading="lazy" decoding="async">
+              <div class="menu-row-thumb-wrap btn-view-dish" data-dish-id="${dish.id}" title="Click to view ${dish.name}">
+                <img class="menu-row-thumb" src="${dish.image}" alt="${dish.name}" loading="lazy" decoding="async">
+                <span class="thumb-view-cue"><i data-lucide="eye"></i></span>
+              </div>
               <div class="menu-row-lead">
                 <span class="menu-row-num">№ ${itemNum}</span>
                 <div class="menu-row-info">
@@ -216,6 +220,9 @@ function renderAuthenticDiningCarte() {
               </div>
 
               <div class="menu-row-actions">
+                <button type="button" class="carte-view-btn btn-view-dish" data-dish-id="${dish.id}" title="View image and details of ${dish.name}">
+                  <i data-lucide="eye"></i> <span>View</span>
+                </button>
                 <a href="/pages/reservations.html?experience=alacarte&item=${encodeURIComponent(dish.name)}" class="carte-reserve-link" title="Reserve dining table for this course">
                   <i data-lucide="calendar-days"></i> <span>Reserve for this Course</span>
                 </a>
@@ -245,6 +252,13 @@ function renderAuthenticDiningCarte() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation()
       quickAddToOrder(btn.dataset.quickAddId)
+    })
+  })
+
+  container.querySelectorAll('.btn-view-dish').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openDishViewModal(btn.dataset.dishId)
     })
   })
 
@@ -406,6 +420,10 @@ function renderHearthOrderList() {
         <div class="order-row-main">
           <!-- Left Badge & Station -->
           <div class="order-row-station-col">
+            <div class="order-row-thumb-wrap btn-view-dish" data-dish-id="${dish.id}" title="Click to view image and details of ${dish.name}">
+              <img class="order-row-thumb" src="${dish.image}" alt="${dish.name}" loading="lazy">
+              <span class="thumb-view-cue"><i data-lucide="eye"></i></span>
+            </div>
             <span class="station-badge">HEARTH PASS</span>
             <span class="prep-pill"><i data-lucide="clock"></i> ${dish.prepTime}</span>
             <span class="calories-pill">${dish.calories}</span>
@@ -434,6 +452,13 @@ function renderHearthOrderList() {
 
           <!-- Right Action Buttons -->
           <div class="order-row-actions">
+            <button type="button" class="btn-view-dish order-view-btn" data-dish-id="${dish.id}">
+              <div class="btn-text-pair">
+                <strong class="btn-action-name"><i data-lucide="eye"></i> View Dish</strong>
+                <small class="btn-subtext">Image & full details</small>
+              </div>
+            </button>
+
             <button type="button" class="btn-fire-order btn-quick-order" data-quick-add-id="${dish.id}">
               <div class="btn-text-pair">
                 <strong class="btn-action-name"><i data-lucide="plus"></i> Quick Order</strong>
@@ -465,6 +490,13 @@ function renderHearthOrderList() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation()
       quickAddToOrder(btn.dataset.quickAddId)
+    })
+  })
+
+  container.querySelectorAll('.btn-view-dish').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openDishViewModal(btn.dataset.dishId)
     })
   })
 
@@ -594,6 +626,151 @@ export function closeCustomizationModal() {
     customizeModal.setAttribute('aria-hidden', 'true')
     document.body.classList.remove('modal-open')
     customizationTrigger?.focus()
+  }
+}
+
+// -------------------------------------------------------------
+// Dish Detail View Modal (Image + Full Info Popup)
+// -------------------------------------------------------------
+let dishViewModal
+let dishViewTrigger
+
+function setupDishViewModal() {
+  dishViewModal = document.querySelector('#dish-view-modal')
+  if (!dishViewModal) return
+
+  dishViewModal.querySelector('.modal-backdrop')?.addEventListener('click', closeDishViewModal)
+  dishViewModal.querySelector('.modal-close')?.addEventListener('click', closeDishViewModal)
+
+  document.addEventListener('keydown', (e) => {
+    if (dishViewModal.classList.contains('is-open')) {
+      if (e.key === 'Escape') closeDishViewModal()
+      else trapDialogFocus(e, dishViewModal)
+    }
+  })
+
+  // Global delegation for View button and meal thumbnails across carte, tasting & order pass
+  document.addEventListener('click', (e) => {
+    const viewBtn = e.target.closest('.btn-view-dish')
+    if (viewBtn && viewBtn.dataset.dishId) {
+      e.preventDefault()
+      e.stopPropagation()
+      openDishViewModal(viewBtn.dataset.dishId)
+      return
+    }
+
+    const dishImg = e.target.closest('.menu-row-thumb-wrap, .order-row-thumb-wrap, .menu-row-mobile-image')
+    if (dishImg) {
+      const dishId = dishImg.dataset.dishId || dishImg.closest('[data-dish-id]')?.dataset.dishId
+      if (dishId) {
+        e.preventDefault()
+        e.stopPropagation()
+        openDishViewModal(dishId)
+        return
+      }
+    }
+  })
+}
+
+function openDishViewModal(dishId) {
+  const dish = menuItems.find((d) => d.id === dishId)
+  if (!dish || !dishViewModal) return
+
+  dishViewTrigger = document.activeElement
+  const body = dishViewModal.querySelector('.dish-view-body')
+  if (!body) return
+
+  const dietBadges = dish.diet.map((d) => {
+    if (d === 'vegetarian') return '<span class="dish-view-diet" title="Vegetarian">🌱 Vegetarian</span>'
+    if (d === 'gluten-free') return '<span class="dish-view-diet" title="Gluten-Free">🌾 Gluten-Free</span>'
+    if (d === 'spicy') return '<span class="dish-view-diet" title="Live-Fire Spicy">🔥 Live Fire Spicy</span>'
+    return ''
+  }).join('')
+
+  body.innerHTML = `
+    <div class="dish-view-layout">
+      <div class="dish-view-image-wrap">
+        <img src="${dish.image}" alt="${dish.name}" loading="eager">
+        <span class="dish-view-badge">${dish.badge || 'Chef Selection'}</span>
+      </div>
+      <div class="dish-view-info">
+        <div class="dish-view-topline">
+          <small class="dish-view-category">${dish.categoryLabel || 'Seasonal Selection'}</small>
+          <div class="dish-view-meta">
+            <span><i data-lucide="clock"></i> ${dish.prepTime}</span>
+            <span><i data-lucide="flame"></i> ${dish.calories}</span>
+          </div>
+        </div>
+        <h2 class="dish-view-title">${dish.name}</h2>
+        <div class="dish-view-price-row">
+          <strong class="dish-view-price">$${Number(dish.price).toFixed(2)}</strong>
+          ${dietBadges ? `<div class="dish-view-diets">${dietBadges}</div>` : ''}
+        </div>
+        <p class="dish-view-desc">${dish.description}</p>
+        
+        <div class="dish-view-section">
+          <h4><i data-lucide="utensils"></i> Ingredients & Composition</h4>
+          <ul class="dish-view-ingredients">
+            ${dish.ingredients.map((ing) => `<li><i data-lucide="check"></i> <span>${ing.name}</span></li>`).join('')}
+          </ul>
+        </div>
+        
+        ${dish.allergens && dish.allergens.length ? `
+          <div class="dish-view-section">
+            <h4><i data-lucide="alert-triangle"></i> Allergens</h4>
+            <div class="dish-view-allergens">${dish.allergens.map(a => `<span class="allergen-tag"><i data-lucide="alert-circle"></i> ${a}</span>`).join('')}</div>
+          </div>
+        ` : ''}
+        
+        ${dish.pairing ? `
+          <div class="dish-view-section dish-view-pairing">
+            <h4><i data-lucide="wine"></i> Sommelier Cellar Pairing</h4>
+            <p>${dish.pairing}</p>
+          </div>
+        ` : ''}
+        
+        ${dish.chefNote ? `
+          <div class="dish-view-chef-note">
+            <i data-lucide="quote"></i>
+            <p>“${dish.chefNote}”</p>
+            <span>Chef Amara's Hearth Note</span>
+          </div>
+        ` : ''}
+
+        <div class="dish-view-actions">
+          <button type="button" class="button button-primary dish-view-quick-add" data-quick-add-id="${dish.id}">
+            <i data-lucide="plus"></i> <span>Add to Order Bag • $${Number(dish.price).toFixed(2)}</span>
+          </button>
+          <button type="button" class="button button-dark dish-view-trigger-custom" data-dish-id="${dish.id}">
+            <i data-lucide="sliders-horizontal"></i> <span>Customize Ingredients</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+
+  body.querySelector('.dish-view-quick-add')?.addEventListener('click', () => {
+    quickAddToOrder(dish.id)
+    closeDishViewModal()
+  })
+  body.querySelector('.dish-view-trigger-custom')?.addEventListener('click', () => {
+    closeDishViewModal()
+    openCustomizationModal(dish.id)
+  })
+
+  dishViewModal.classList.add('is-open')
+  dishViewModal.setAttribute('aria-hidden', 'false')
+  document.body.classList.add('modal-open')
+  dishViewModal.querySelector('.modal-close')?.focus()
+  initializeIcons()
+}
+
+function closeDishViewModal() {
+  if (dishViewModal) {
+    dishViewModal.classList.remove('is-open')
+    dishViewModal.setAttribute('aria-hidden', 'true')
+    document.body.classList.remove('modal-open')
+    dishViewTrigger?.focus()
   }
 }
 
