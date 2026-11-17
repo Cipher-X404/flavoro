@@ -8,12 +8,15 @@ import { initPreloader, FLAVORO_WORDS } from './animations/preloader.js'
 import { initializeIcons } from './icons.js'
 import { renderPage } from './pages.js'
 import { applyLocalSettings, showLocalUpdate } from './site-updates.js'
+import { initEndlessCorridor } from './components/ui/endless.js'
+import { initTeamLanyardRail } from './components/ui/team-lanyard-rail.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
 let teardownSmoothScroll
 let teardownAnimations
 let teardownPreloader
+let teardownEndless
 
 function initialize() {
   const page = document.body.dataset.page || 'home'
@@ -51,28 +54,30 @@ function initialize() {
   teardownSmoothScroll = initSmoothScroll({ Lenis, gsap, ScrollTrigger })
   teardownAnimations = initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero: false })
 
-  teardownPreloader = initPreloader({
-    words: FLAVORO_WORDS,
-    onReveal: () => {
-      teardownAnimations?.playHero?.()
-      if (!reduceMotion && !heroVideo?.paused) heroVideo?.play()?.catch?.(() => {})
-    },
-    onComplete: () => {
-      ScrollTrigger.refresh()
-      showLocalUpdate()
-    }
-  })
-
-  // Developer / user utility for live previewing words or testing
-  window.__restartPreloader = (customWords) => {
-    teardownPreloader?.destroy?.()
+  if (page === 'home') {
     teardownPreloader = initPreloader({
-      words: customWords || FLAVORO_WORDS,
-      onReveal: () => teardownAnimations?.playHero?.(),
-      onComplete: () => ScrollTrigger.refresh()
+      words: FLAVORO_WORDS,
+      onReveal: () => {
+        teardownAnimations?.playHero?.()
+        if (!reduceMotion && !heroVideo?.paused) heroVideo?.play()?.catch?.(() => {})
+      },
+      onComplete: () => {
+        ScrollTrigger.refresh()
+        showLocalUpdate()
+      }
     })
+
+    // Developer / user utility for live previewing words or testing
+    window.__restartPreloader = (customWords) => {
+      teardownPreloader?.destroy?.()
+      teardownPreloader = initPreloader({
+        words: customWords || FLAVORO_WORDS,
+        onReveal: () => teardownAnimations?.playHero?.(),
+        onComplete: () => ScrollTrigger.refresh()
+      })
+    }
+    window.__FLAVORO_WORDS = FLAVORO_WORDS
   }
-  window.__FLAVORO_WORDS = FLAVORO_WORDS
 
   // The editorial menus support pointer, keyboard, and click/touch interaction.
   const megaItems = [...document.querySelectorAll('[data-mega-item]')]
@@ -188,6 +193,14 @@ function initialize() {
     import('./menu-features.js').then(({ initMenuFeatures }) => initMenuFeatures())
   } else if (page === 'reservations') {
     import('./reservation-features.js').then(({ initReservationFeatures }) => initReservationFeatures())
+  } else if (page === 'blog' || page === 'contact' || page === 'about') {
+    import('./editorial-features.js').then(({ initEditorialFeatures }) => initEditorialFeatures())
+    if (page === 'about') {
+      initTeamLanyardRail()
+      initializeIcons()
+    }
+  } else if (page === 'gallery') {
+    teardownEndless = initEndlessCorridor()
   }
 
   requestAnimationFrame(() => ScrollTrigger.refresh())
@@ -200,4 +213,5 @@ if (import.meta.hot) import.meta.hot.dispose(() => {
   teardownPreloader?.destroy?.()
   teardownAnimations?.()
   teardownSmoothScroll?.()
+  teardownEndless?.()
 })

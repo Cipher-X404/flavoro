@@ -1,78 +1,1678 @@
 import './dashboard.css'
 import { gsap } from 'gsap'
-import { createIcons, LayoutDashboard, UtensilsCrossed, Megaphone, ClipboardList, SlidersHorizontal, Heart, UserRound, Sparkles, ArrowUpRight, Plus, Pencil, Trash2, X, Check, CircleHelp, Globe, ShoppingBag, CalendarDays, Image, ChevronRight, ExternalLink, BookOpen } from 'lucide'
+import {
+  createIcons,
+  LayoutDashboard,
+  UtensilsCrossed,
+  Megaphone,
+  ClipboardList,
+  SlidersHorizontal,
+  Heart,
+  UserRound,
+  ArrowUpRight,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  CircleHelp,
+  Globe,
+  ShoppingBag,
+  CalendarDays,
+  Image,
+  ChevronRight,
+  ExternalLink,
+  BookOpen,
+  Flame,
+  Bell,
+  Activity,
+  TrendingUp,
+  Clock,
+  Search,
+  ShieldCheck,
+  Users,
+  Wine,
+  Leaf,
+  RefreshCw,
+  CheckCircle2,
+  ArrowRight,
+  Eye,
+  Sliders,
+  DollarSign,
+  Compass,
+  Zap,
+  Info,
+  ChevronDown
+} from 'lucide'
 import { isSignedIn, logout } from './local-auth.js'
-import { getMenu, saveMenu, getUpdate, saveUpdate, getProfile, saveProfile, getSettings, saveSettings, getFavorites, saveFavorites } from './dashboard-data.js'
-const icons = { LayoutDashboard, UtensilsCrossed, Megaphone, ClipboardList, SlidersHorizontal, Heart, UserRound, Sparkles, ArrowUpRight, Plus, Pencil, Trash2, X, Check, CircleHelp, Globe, ShoppingBag, CalendarDays, Image, ChevronRight, ExternalLink, BookOpen }
+import {
+  getMenu,
+  saveMenu,
+  getUpdate,
+  saveUpdate,
+  getProfile,
+  saveProfile,
+  getSettings,
+  saveSettings,
+  getFavorites,
+  saveFavorites,
+  getTables,
+  saveTables,
+  getActivity,
+  saveActivity,
+  getUserReservations,
+  saveUserReservations,
+  getUserPreferences,
+  saveUserPreferences,
+} from './dashboard-data.js'
+
+const icons = {
+  LayoutDashboard,
+  UtensilsCrossed,
+  Megaphone,
+  ClipboardList,
+  SlidersHorizontal,
+  Heart,
+  UserRound,
+  ArrowUpRight,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  CircleHelp,
+  Globe,
+  ShoppingBag,
+  CalendarDays,
+  Image,
+  ChevronRight,
+  ExternalLink,
+  BookOpen,
+  Flame,
+  Bell,
+  Activity,
+  TrendingUp,
+  Clock,
+  Search,
+  ShieldCheck,
+  Users,
+  Wine,
+  Leaf,
+  RefreshCw,
+  CheckCircle2,
+  ArrowRight,
+  Eye,
+  Sliders,
+  DollarSign,
+  Compass,
+  Zap,
+  Info,
+  ChevronDown,
+}
+
 const admin = document.body.dataset.dashboard === 'admin'
 const root = document.querySelector('#dashboard')
 const role = admin ? 'admin' : 'user'
-if (!isSignedIn(role)) location.replace(admin ? '/pages/admin-login.html' : '/pages/login.html')
-const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-const clean = value => String(value ?? '').trim().replace(/[<>]/g, '')
-const nav = admin ? [ ['overview','layout-dashboard','Overview'],['menu','utensils-crossed','Menu'],['updates','megaphone','Updates'],['operations','clipboard-list','Operations'],['settings','sliders-horizontal','Site settings'] ] : [ ['overview','layout-dashboard','Overview'],['favorites','heart','Favorites'],['activity','clipboard-list','Activity'],['profile','user-round','Profile'] ]
+
+const isPreviewMode = new URLSearchParams(location.search).get('preview') === 'true'
+if (!isSignedIn(role) && !isPreviewMode) {
+  location.replace(admin ? '/pages/admin-login.html' : '/pages/login.html')
+}
+
+const escape = (value) =>
+  String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+const clean = (value) => String(value ?? '').trim().replace(/[<>]/g, '')
+
+const adminNav = [
+  ['overview', 'layout-dashboard', 'Overview', ''],
+  ['menu', 'utensils-crossed', 'Menu Studio', 'Live'],
+  ['tables', 'calendar-days', 'Floor & Tables', '8'],
+  ['updates', 'megaphone', 'Announcements', ''],
+  ['operations', 'activity', 'Operations', 'Active'],
+  ['settings', 'sliders-horizontal', 'Settings', ''],
+]
+
+const userNav = [
+  ['overview', 'layout-dashboard', 'Home', ''],
+  ['favorites', 'heart', 'Saved Dishes', '3'],
+  ['activity', 'calendar-days', 'Reservations', 'Next'],
+  ['taste', 'compass', 'Taste Profile', 'VIP'],
+  ['profile', 'user-round', 'Account', ''],
+]
+
+const nav = admin ? adminNav : userNav
 let current = 'overview'
-const icon = name => `<i data-lucide="${name}" aria-hidden="true"></i>`
-const pageHead = (eyebrow, title, desc) => `<div class="dash-page-head"><div><span class="dash-eyebrow">${eyebrow}</span><h1>${title}</h1><p>${desc}</p></div><span class="dash-page-mark" aria-hidden="true">${icon('sparkles')}</span></div>`
-const note = text => `<div class="dash-notice">${icon('circle-help')}<span>${text}</span></div>`
-const navButton = (id,label,ic) => `<button type="button" class="dash-nav-button ${current === id ? 'active' : ''}" data-panel="${id}" aria-label="${label}" ${current === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${label}</span></button>`
+let clockInterval = null
+let currentChartPeriod = 'today'
+
+const icon = (name) => `<i data-lucide="${name}" aria-hidden="true"></i>`
+
+function startLiveClock() {
+  if (clockInterval) clearInterval(clockInterval)
+  const update = () => {
+    const el = document.getElementById('island-live-clock')
+    if (el) {
+      const now = new Date()
+      el.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }
+  }
+  update()
+  clockInterval = setInterval(update, 1000)
+}
+
+function toast(text, type = 'info') {
+  const el = root.querySelector('.dash-toast')
+  if (!el) return
+  el.innerHTML = `
+    <div class="toast-capsule">
+      <span class="toast-icon">${icon(type === 'success' ? 'check-circle-2' : type === 'flame' ? 'flame' : 'bell')}</span>
+      <span class="toast-text">${escape(text)}</span>
+    </div>
+  `
+  createIcons({ icons })
+  el.classList.add('visible')
+  gsap.fromTo(el, { y: 20, scale: 0.95, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(1.8)' })
+
+  clearTimeout(toast.timer)
+  toast.timer = setTimeout(() => {
+    gsap.to(el, { y: -15, opacity: 0, scale: 0.96, duration: 0.25, ease: 'power2.in', onComplete: () => el.classList.remove('visible') })
+  }, 3400)
+}
+
 function shell() {
- root.innerHTML = `<header class="dash-top"><a class="dash-brand" href="/index.html">flavoro<span>${icon('sparkles')}</span><small>${admin ? 'STUDIO' : 'CLUB'}</small></a><div class="dash-top-right"><span class="dash-demo-pill"><span></span> LOCAL PREVIEW</span><a class="dash-site-link" href="/index.html">View site ${icon('arrow-up-right')}</a><button class="dash-signout" type="button" data-signout>Sign out</button></div></header><main class="dash-main" id="dash-content" tabindex="-1"></main><nav class="dash-dock" aria-label="Dashboard navigation">${nav.map(([id,ic,label]) => navButton(id,label,ic)).join('')}<span class="dock-divider"></span><a href="/index.html" aria-label="Return to website">${icon('globe')}<span>Website</span></a></nav><div class="dash-toast" role="status" aria-live="polite"></div>`
- root.querySelector('[data-signout]').addEventListener('click', () => { logout(role); location.replace(admin ? '/pages/admin-login.html' : '/pages/login.html') })
- root.querySelectorAll('[data-panel]').forEach(b => b.addEventListener('click', () => show(b.dataset.panel)))
+  const profile = getProfile()
+  const guestFirstName = profile.name ? profile.name.split(' ')[0] : 'Guest'
+
+  root.innerHTML = `
+  <header class="ios-glass-bar">
+    <div class="bar-left">
+      <a class="bar-brand" href="/index.html" aria-label="Flavoro Restaurant">
+        <span class="brand-flame-circle"><i data-lucide="flame"></i></span>
+        <div class="brand-text">
+          <b>Flavoro</b>
+          <span class="brand-badge">${admin ? 'STUDIO OS' : 'CLUB'}</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Apple Dynamic Island Status Capsule -->
+    <div class="dynamic-island" id="dynamic-island" role="status" aria-label="Live restaurant status">
+      <div class="island-pill-inner">
+        <span class="island-live-beacon" aria-hidden="true"></span>
+        <div class="island-telemetry">
+          <span class="island-service-title">${admin ? 'Dinner Service Active' : 'Table Reservation Confirmed'}</span>
+          <span class="island-divider">·</span>
+          <span class="island-clock" id="island-live-clock">--:--:--</span>
+        </div>
+        <span class="island-status-pill">${admin ? '88% Capacity' : 'Hearth Counter'}</span>
+      </div>
+    </div>
+
+    <div class="bar-right">
+      <div class="bar-actions">
+        <button type="button" class="bar-btn icon-only" id="btn-notifications" aria-label="Notifications">
+          <i data-lucide="bell"></i>
+          <span class="bar-notif-dot"></span>
+        </button>
+
+        <a class="bar-btn site-btn" href="/index.html">
+          <span>Website</span>
+          <i data-lucide="arrow-up-right"></i>
+        </a>
+
+        <div class="user-pill-dropdown">
+          <div class="user-avatar-capsule">
+            <span class="avatar-letter">${admin ? 'A' : (guestFirstName[0] || 'G')}</span>
+            <span class="user-name-label">${admin ? 'Admin Studio' : guestFirstName}</span>
+          </div>
+          <button class="bar-btn signout-btn" type="button" data-signout title="Sign out">
+            <span>Sign out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- iOS Slide-out Notification Drawer -->
+  <aside class="ios-drawer" id="notification-drawer" aria-hidden="true" role="dialog" aria-label="Recent notifications">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <i data-lucide="bell"></i>
+        <h3>Notifications &amp; Activity</h3>
+      </div>
+      <button type="button" class="drawer-close" id="btn-close-notifications" aria-label="Close notifications">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-activity-feed">
+        ${getActivity().map(act => `
+          <div class="drawer-feed-item">
+            <div class="feed-icon-wrap"><i data-lucide="${act.icon || 'activity'}"></i></div>
+            <div class="feed-copy">
+              <p>${escape(act.text)}</p>
+              <span class="feed-time">${escape(act.time)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  </aside>
+
+  <main class="dash-content-area" id="dash-content" tabindex="-1"></main>
+
+  <!-- 10x Apple macOS/iOS Interactive Dock Navigation -->
+  <nav class="ios-dock-wrap" aria-label="Dashboard navigation">
+    <div class="dash-dock" id="dash-dock">
+      <div class="dock-shelf">
+        ${nav.map(([id, ic, label, badge]) => `
+          <button type="button"
+            class="dock-item ${current === id ? 'is-active' : ''}"
+            data-panel="${id}"
+            data-label="${label}"
+            aria-label="${label}"
+            ${current === id ? 'aria-current="page"' : ''}>
+            <div class="dock-icon-box">
+              <i data-lucide="${ic}"></i>
+              ${badge ? `<span class="dock-badge">${badge}</span>` : ''}
+            </div>
+            <span class="dock-tooltip">${label}</span>
+            <span class="dock-active-pill" aria-hidden="true"></span>
+          </button>
+        `).join('')}
+
+        <span class="dock-separator" aria-hidden="true"></span>
+
+        <a href="/index.html" class="dock-item dock-link" data-label="Return to Website" aria-label="Return to Website">
+          <div class="dock-icon-box">
+            <i data-lucide="globe"></i>
+          </div>
+          <span class="dock-tooltip">Return to Site</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dash-toast" role="status" aria-live="polite"></div>
+  `
+
+  root.querySelector('[data-signout]').addEventListener('click', () => {
+    logout(role)
+    location.replace(admin ? '/pages/admin-login.html' : '/pages/login.html')
+  })
+
+  // Notifications Drawer
+  const drawer = root.querySelector('#notification-drawer')
+  const notifBtn = root.querySelector('#btn-notifications')
+  const closeNotifBtn = root.querySelector('#btn-close-notifications')
+
+  notifBtn?.addEventListener('click', () => {
+    const isOpen = drawer.classList.contains('is-open')
+    if (isOpen) {
+      drawer.classList.remove('is-open')
+      drawer.setAttribute('aria-hidden', 'true')
+    } else {
+      drawer.classList.add('is-open')
+      drawer.setAttribute('aria-hidden', 'false')
+      gsap.from(drawer.querySelectorAll('.drawer-feed-item'), {
+        x: 30,
+        opacity: 0,
+        stagger: 0.05,
+        duration: 0.35,
+        ease: 'power2.out'
+      })
+    }
+  })
+
+  closeNotifBtn?.addEventListener('click', () => {
+    drawer.classList.remove('is-open')
+    drawer.setAttribute('aria-hidden', 'true')
+  })
+
+  root.querySelectorAll('[data-panel]').forEach((b) => {
+    b.addEventListener('click', () => {
+      // Apple icon bounce on click
+      gsap.timeline()
+        .to(b, { scale: 0.88, duration: 0.1, ease: 'power2.out' })
+        .to(b, { scale: 1.16, y: -8, duration: 0.22, ease: 'back.out(2)' })
+        .to(b, { scale: 1, y: 0, duration: 0.18, ease: 'power2.out' })
+
+      show(b.dataset.panel)
+    })
+  })
+
+  startLiveClock()
+  initDockMagnification()
 }
+
+// Apple iOS/macOS parabolic dock magnification physics
+function initDockMagnification() {
+  const dock = document.querySelector('#dash-dock')
+  if (!dock) return
+  const items = Array.from(dock.querySelectorAll('.dock-item'))
+  const maxScale = 1.28
+  const range = 110
+
+  const onMouseMove = (e) => {
+    if (window.matchMedia('(max-width: 768px)').matches) return
+    const mouseX = e.clientX
+    items.forEach((item) => {
+      const rect = item.getBoundingClientRect()
+      const itemCenter = rect.left + rect.width / 2
+      const distance = Math.abs(mouseX - itemCenter)
+      if (distance < range) {
+        const norm = distance / range
+        const scale = 1 + (maxScale - 1) * Math.cos(norm * (Math.PI / 2))
+        const translateY = -12 * Math.cos(norm * (Math.PI / 2))
+        item.style.transform = `scale(${scale.toFixed(3)}) translateY(${translateY.toFixed(1)}px)`
+      } else {
+        item.style.transform = 'scale(1) translateY(0px)'
+      }
+    })
+  }
+
+  const onMouseLeave = () => {
+    items.forEach((item) => {
+      gsap.to(item, { scale: 1, y: 0, duration: 0.3, ease: 'power2.out' })
+    })
+  }
+
+  dock.addEventListener('mousemove', onMouseMove)
+  dock.addEventListener('mouseleave', onMouseLeave)
+}
+
 function show(panel) {
- current = nav.some(([id]) => id === panel) ? panel : 'overview'
- shell(); const main = root.querySelector('main'); main.innerHTML = (admin ? adminPanels : userPanels)[current]()
- createIcons({ icons }); bind(); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.from(main.querySelectorAll('.dash-animate'), { opacity: 0, y: 18, duration: .6, stagger: .06, ease:'power3.out' })
- window.scrollTo({top:0, behavior:'auto'})
+  current = nav.some(([id]) => id === panel) ? panel : 'overview'
+  shell()
+  const main = root.querySelector('main')
+  main.innerHTML = (admin ? adminPanels : userPanels)[current]()
+  createIcons({ icons })
+  bind()
+
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    gsap.from(main.querySelectorAll('.ios-spring-enter'), {
+      opacity: 0,
+      y: 26,
+      scale: 0.98,
+      duration: 0.6,
+      stagger: 0.05,
+      ease: 'back.out(1.4)',
+    })
+  }
+
+  window.scrollTo({ top: 0, behavior: 'auto' })
 }
-function toast(text) { const el = root.querySelector('.dash-toast'); el.textContent = text; el.classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('visible'), 3200) }
+
+/* =========================================================================
+   ADMIN DASHBOARD PANELS
+   ========================================================================= */
+
 function adminOverview() {
- const menu = getMenu(), update = getUpdate()
- return `${pageHead('THE RESTAURANT, AT A GLANCE', 'A little more<br><em>in control.</em>', 'A thoughtful workspace for the details that make Flavoro feel like Flavoro.')}${note('Demo workspace: changes are saved only in this browser. This is not a secure admin system or a live restaurant connection.')}
- <div class="dash-bento"><div class="dash-card dash-welcome dash-animate"><div class="welcome-copy"><span class="card-kicker">YOUR SPACE / 01</span><h2>Good things start<br>behind the scenes.</h2><p>Shape the experience, one detail at a time.</p><button class="dash-action light" data-go="menu">Explore the menu ${icon('arrow-up-right')}</button></div><div class="welcome-orbit"><span>F</span><div></div></div></div>
- <div class="dash-card stat-card dash-animate"><div class="stat-icon">${icon('utensils-crossed')}</div><span>MENU COLLECTION</span><strong>${menu.length}</strong><p>Items in your local menu</p><button data-go="menu">Manage menu ↗</button></div>
- <div class="dash-card stat-card orange-card dash-animate"><div class="stat-icon">${icon('megaphone')}</div><span>GUEST UPDATE</span><strong>${update?.enabled ? 'On' : 'Off'}</strong><p>${update?.enabled ? 'An update is ready to show' : 'No update currently published'}</p><button data-go="updates">Manage update ↗</button></div>
- <div class="dash-card dash-shortcuts dash-animate"><div><span class="card-kicker">THE WORKSPACE / 02</span><h2>Make it yours.</h2></div><div class="shortcut-list"><button data-go="settings">${icon('sliders-horizontal')}<span><b>Site settings</b><small>Edit the home invitation</small></span>${icon('arrow-up-right')}</button><button data-go="operations">${icon('clipboard-list')}<span><b>Operations</b><small>Connections & readiness</small></span>${icon('arrow-up-right')}</button><a href="/index.html">${icon('globe')}<span><b>Visit the website</b><small>See your local changes</small></span>${icon('arrow-up-right')}</a></div></div>
- <div class="dash-card dash-image-card dash-animate"><img src="/images/restaurant-interior.jpg" alt=""><div><span>THE FLAVORO FEELING</span><h2>A table worth<br><em>staying for.</em></h2></div></div></div>`
+  const menu = getMenu()
+  const update = getUpdate()
+  const tables = getTables()
+  const seatedTables = tables.filter((t) => t.status === 'seated').length
+  const totalTables = tables.length
+  const occupancyPercent = Math.round((seatedTables / totalTables) * 100)
+
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="flame"></i> CULINARY STUDIO &amp; COMMAND</div>
+      <h1>Dining Room <em>Cadence.</em></h1>
+      <p>Live hearth temperatures, floor status, covers telemetry, and operational intelligence.</p>
+    </div>
+    <div class="view-header-actions">
+      <button type="button" class="ios-action-btn primary" id="btn-quick-dish"><i data-lucide="plus"></i> <span>Add Dish</span></button>
+      <button type="button" class="ios-action-btn secondary" data-go="updates"><i data-lucide="megaphone"></i> <span>Publish Notice</span></button>
+    </div>
+  </div>
+
+  <!-- iOS KPI Metric Cards -->
+  <div class="kpi-grid ios-spring-enter">
+    <div class="ios-card kpi-card">
+      <div class="kpi-head">
+        <span class="kpi-label">TODAY'S REVENUE</span>
+        <div class="kpi-icon-bubble green"><i data-lucide="dollar-sign"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number">$8,740.00</span>
+        <span class="kpi-delta positive"><i data-lucide="trending-up"></i> +18.4% vs yday</span>
+      </div>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill" style="width: 78%;"></div></div>
+      <span class="kpi-subtext">Peak 8:00 PM sitting fully booked</span>
+    </div>
+
+    <div class="ios-card kpi-card">
+      <div class="kpi-head">
+        <span class="kpi-label">COVERS &amp; CAPACITY</span>
+        <div class="kpi-icon-bubble amber"><i data-lucide="users"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number">148 / 160</span>
+        <span class="kpi-delta positive"><i data-lucide="check-circle-2"></i> ${occupancyPercent}% Floor</span>
+      </div>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill amber" style="width: ${occupancyPercent}%;"></div></div>
+      <span class="kpi-subtext">${seatedTables} active tables currently seated</span>
+    </div>
+
+    <div class="ios-card kpi-card">
+      <div class="kpi-head">
+        <span class="kpi-label">HEARTH DISHES FIRED</span>
+        <div class="kpi-icon-bubble orange"><i data-lucide="flame"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number">${menu.length}</span>
+        <span class="kpi-delta neutral"><i data-lucide="utensils-crossed"></i> Active Carte</span>
+      </div>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill orange" style="width: 85%;"></div></div>
+      <span class="kpi-subtext">700° seasoned oak hearth pass</span>
+    </div>
+
+    <div class="ios-card kpi-card">
+      <div class="kpi-head">
+        <span class="kpi-label">AVG TABLE TURN</span>
+        <div class="kpi-icon-bubble purple"><i data-lucide="clock"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number">1h 22m</span>
+        <span class="kpi-delta positive"><i data-lucide="trending-up"></i> -8m optimal</span>
+      </div>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill purple" style="width: 90%;"></div></div>
+      <span class="kpi-subtext">Optimal cadence across dining salon</span>
+    </div>
+  </div>
+
+  <!-- Interactive Revenue & Covers Telemetry Curve (SVG Chart) -->
+  <div class="ios-card chart-card ios-spring-enter">
+    <div class="chart-header">
+      <div>
+        <span class="card-kicker">HOURLY TELEMETRY &amp; SERVICE CURVE</span>
+        <h2>Revenue &amp; Guest Flow</h2>
+      </div>
+      <div class="ios-segmented-control" id="chart-segments">
+        <button type="button" class="segment-btn is-active" data-period="today">Today</button>
+        <button type="button" class="segment-btn" data-period="week">This Week</button>
+        <button type="button" class="segment-btn" data-period="month">30-Day Trend</button>
+      </div>
+    </div>
+
+    <div class="chart-canvas-wrap">
+      <svg class="telemetry-chart" viewBox="0 0 920 220" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f88a08" stop-opacity="0.38"/>
+            <stop offset="100%" stop-color="#f88a08" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        <!-- Horizontal Guide Lines -->
+        <line x1="0" y1="40" x2="920" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+        <line x1="0" y1="100" x2="920" y2="100" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+        <line x1="0" y1="160" x2="920" y2="160" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+
+        <!-- Area Fill -->
+        <path id="chart-area" d="M 40,170 C 120,165 200,140 280,120 C 360,105 440,145 520,75 C 600,35 680,50 760,25 C 840,18 880,35 900,20 L 900,200 L 40,200 Z" fill="url(#chartGradient)" />
+
+        <!-- Stroke Line -->
+        <path id="chart-stroke" d="M 40,170 C 120,165 200,140 280,120 C 360,105 440,145 520,75 C 600,35 680,50 760,25 C 840,18 880,35 900,20" fill="none" stroke="#f88a08" stroke-width="3" stroke-linecap="round" />
+
+        <!-- Highlight Nodes -->
+        <circle cx="280" cy="120" r="5" fill="#f88a08" stroke="#1c1714" stroke-width="2"/>
+        <circle cx="520" cy="75" r="5" fill="#f88a08" stroke="#1c1714" stroke-width="2"/>
+        <circle cx="760" cy="25" r="7" fill="#ffad35" stroke="#fff" stroke-width="2"/>
+      </svg>
+
+      <!-- Dynamic Hover Scrubber Tooltip -->
+      <div class="chart-tooltip" id="chart-tooltip">
+        <span class="tooltip-time">08:00 PM Peak Sitting</span>
+        <strong class="tooltip-val">$2,840 · 48 Covers</strong>
+      </div>
+    </div>
+
+    <div class="chart-axis-labels">
+      <span>12:00 PM</span>
+      <span>02:00 PM</span>
+      <span>04:00 PM</span>
+      <span>06:00 PM</span>
+      <span class="is-peak">08:00 PM (Peak)</span>
+      <span>10:00 PM</span>
+      <span>Close</span>
+    </div>
+  </div>
+
+  <!-- Live Floor & Seating Grid -->
+  <div class="floor-section ios-spring-enter">
+    <div class="section-title-row">
+      <div>
+        <span class="card-kicker">REAL-TIME DINING ROOM LAYOUT</span>
+        <h2>Active Tables &amp; Course Cadence</h2>
+      </div>
+      <button type="button" class="ios-action-btn secondary" data-go="tables">
+        <span>View Full Floor</span> <i data-lucide="chevron-right"></i>
+      </button>
+    </div>
+
+    <div class="tables-grid">
+      ${tables.slice(0, 6).map(t => `
+        <div class="table-card status-${t.status}" data-table-id="${t.id}">
+          <div class="table-card-top">
+            <span class="table-num">${t.name}</span>
+            <span class="table-status-pill ${t.status}">${t.status}</span>
+          </div>
+          <div class="table-zone">${t.zone} · ${t.seats} Seats</div>
+          <div class="table-guest">${t.guest || 'Open for seating'}</div>
+          <div class="table-course-info">
+            <i data-lucide="clock"></i>
+            <span>${t.course ? `Current: ${t.course}` : t.time ? `At ${t.time}` : 'Ready for walk-ins'}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+
+  <!-- Split Bento: Activity Stream & Shortcuts -->
+  <div class="bento-dual-split ios-spring-enter">
+    <div class="ios-card activity-card">
+      <div class="card-title-row">
+        <span class="card-kicker">CADENCE FEED</span>
+        <h3>Recent Service Activity</h3>
+      </div>
+      <div class="activity-feed-list">
+        ${getActivity().slice(0, 4).map(a => `
+          <div class="activity-item">
+            <div class="activity-icon-bubble"><i data-lucide="${a.icon}"></i></div>
+            <div class="activity-copy">
+              <p>${escape(a.text)}</p>
+              <small>${escape(a.time)}</small>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="ios-card shortcuts-card">
+      <div class="card-title-row">
+        <span class="card-kicker">CONTROL SHORTCUTS</span>
+        <h3>Quick Operations</h3>
+      </div>
+      <div class="shortcuts-action-list">
+        <button type="button" class="shortcut-row" data-go="menu">
+          <div class="shortcut-icon"><i data-lucide="utensils-crossed"></i></div>
+          <div class="shortcut-text">
+            <strong>Edit Living Carte</strong>
+            <small>Adjust pricing, badges, and dietary labels</small>
+          </div>
+          <i data-lucide="chevron-right"></i>
+        </button>
+
+        <button type="button" class="shortcut-row" data-go="tables">
+          <div class="shortcut-icon"><i data-lucide="calendar-days"></i></div>
+          <div class="shortcut-text">
+            <strong>Seating &amp; Reservations</strong>
+            <small>Assign parties, manage table turnarounds</small>
+          </div>
+          <i data-lucide="chevron-right"></i>
+        </button>
+
+        <button type="button" class="shortcut-row" data-go="settings">
+          <div class="shortcut-icon"><i data-lucide="sliders-horizontal"></i></div>
+          <div class="shortcut-text">
+            <strong>Front-Page Invitations</strong>
+            <small>Tweak homepage text and service hours</small>
+          </div>
+          <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  `
 }
+
 function menuPanel() {
- const items = getMenu()
- return `${pageHead('THE COLLECTION / MENU', 'The menu, <em>your way.</em>', 'Edit the sample collection and see it reflected in the menu on this browser.')}${note('Images are selected from existing site assets. Menu edits are local previews; orders and prices are not live.')}
- <div class="dash-toolbar dash-animate"><label class="dash-search">${icon('utensils-crossed')}<input type="search" id="dash-menu-search" placeholder="Find a dish" aria-label="Search menu items"></label><button class="dash-action" id="add-dish">${icon('plus')} Add dish</button></div>
- <div class="dash-card menu-table dash-animate"><div class="table-heading"><span>THE COLLECTION</span><span>${items.length} ITEMS</span></div><div id="menu-items">${items.map(itemRow).join('')}</div><p class="empty-message" id="no-menu-results" hidden>No dishes match your search.</p></div><div id="dish-dialog-root"></div>`
+  const items = getMenu()
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="utensils-crossed"></i> MENU STUDIO</div>
+      <h1>The Living <em>Carte.</em></h1>
+      <p>Instant updates to dishes, prices, pairings, and dietary labels across the digital menu.</p>
+    </div>
+    <div class="view-header-actions">
+      <button type="button" class="ios-action-btn primary" id="add-dish"><i data-lucide="plus"></i> <span>Add New Dish</span></button>
+    </div>
+  </div>
+
+  <!-- iOS Search & Filter Segment Bar -->
+  <div class="menu-control-bar ios-spring-enter">
+    <div class="ios-search-field">
+      <i data-lucide="search"></i>
+      <input type="search" id="dash-menu-search" placeholder="Search dish by name, ingredients, or category…" aria-label="Search dishes">
+      <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" hidden><i data-lucide="x"></i></button>
+    </div>
+
+    <div class="ios-filter-pills" id="menu-category-pills">
+      <button type="button" class="filter-pill is-active" data-cat="all">All (${items.length})</button>
+      <button type="button" class="filter-pill" data-cat="breakfast">Morning</button>
+      <button type="button" class="filter-pill" data-cat="lunch">Midday</button>
+      <button type="button" class="filter-pill" data-cat="dinner">Evening</button>
+      <button type="button" class="filter-pill" data-cat="drinks">Confections &amp; Cellar</button>
+    </div>
+  </div>
+
+  <!-- Dishes Grid -->
+  <div class="menu-items-grid ios-spring-enter" id="menu-items-grid">
+    ${items.map(dishCardItem).join('')}
+  </div>
+  <p class="empty-notice-state" id="no-menu-results" hidden>
+    <i data-lucide="search"></i>
+    <span>No dishes match your search criteria. Try a different term or clear the filter.</span>
+  </p>
+
+  <div id="dish-dialog-root"></div>
+  `
 }
-function itemRow(item) { return `<div class="dash-menu-row" data-search="${escape((item.name+' '+item.category).toLowerCase())}"><img src="${escape(item.image)}" alt=""><div class="dish-row-name"><strong>${escape(item.name)}</strong><span>${escape(item.categoryLabel || item.category)}</span></div><span class="dish-price">$${Number(item.price || 0).toFixed(2)}</span><div class="dish-row-actions"><button data-edit="${escape(item.id)}" aria-label="Edit ${escape(item.name)}">${icon('pencil')}</button><button data-delete="${escape(item.id)}" aria-label="Delete ${escape(item.name)}">${icon('trash-2')}</button></div></div>` }
-function updatesPanel() { const u = getUpdate() || {}; return `${pageHead('GUEST COMMUNICATION / UPDATES', 'A note from <em>Flavoro.</em>', 'Create a beautifully simple announcement for visitors.')}${note('Publishing displays the update only to visitors using this same browser. Connect a backend to reach all guests.')}
- <div class="dash-split"><form class="dash-card dash-form dash-animate" id="update-form"><span class="card-kicker">COMPOSE / 01</span><h2>What’s new?</h2><label>Small heading<input name="eyebrow" maxlength="45" value="${escape(u.eyebrow || 'A NOTE FROM FLAVORO')}" required></label><label>Title<input name="title" maxlength="80" value="${escape(u.title || '')}" placeholder="A little something new" required></label><label>Message<textarea name="message" maxlength="300" rows="4" placeholder="Share the details with your guests" required>${escape(u.message || '')}</textarea></label><label>Button label <small>Optional</small><input name="buttonLabel" maxlength="35" value="${escape(u.buttonLabel || '')}" placeholder="Explore the menu"></label><label>Button destination <small>Internal path, optional</small><input name="buttonUrl" maxlength="200" value="${escape(u.buttonUrl || '')}" placeholder="/pages/menu.html"></label><label class="dash-check"><input type="checkbox" name="enabled" ${u.enabled ? 'checked' : ''}> Show this update on the website</label><div class="form-actions"><button class="dash-action" type="submit">${icon('check')} Save update</button><button class="dash-secondary" type="button" id="remove-update">Remove</button></div></form>
- <div class="dash-preview dash-animate"><span class="card-kicker">LIVE DESIGN PREVIEW / 02</span><div class="announcement-mock"><span class="announcement-spark">${icon('sparkles')}</span><small data-preview="eyebrow">${escape(u.eyebrow || 'A NOTE FROM FLAVORO')}</small><h2 data-preview="title">${escape(u.title || 'A little something new.')}</h2><p data-preview="message">${escape(u.message || 'Your message to guests will appear here.')}</p><span class="mock-link" data-preview="buttonLabel">${escape(u.buttonLabel || 'DISCOVER MORE')} ↗</span></div></div></div>` }
-function operationsPanel() { return `${pageHead('THE BIG PICTURE / OPERATIONS', 'The details <em>that matter.</em>', 'A clear view of what needs a real connection before launch.')}${note('No live operational data is connected. These are setup guides, not real bookings or orders.')}<div class="operations-grid">${[['calendar-days','Reservations','Not connected','Connect a booking provider to manage availability, guest details, confirmations and cancellations.'],['shopping-bag','Orders','Not connected','Connect an ordering and payments service to receive and manage actual orders.'],['user-round','Guest accounts','Not connected','Secure authentication and a database are needed to manage guests and access permissions.'],['globe','Website content','Local preview','The menu, hero text and update are editable here on this browser; other pages require a CMS.']].map(([i,t,state,desc]) => `<article class="dash-card operation-card dash-animate"><div class="operation-icon">${icon(i)}</div><span class="operation-state">${state}</span><h2>${t}</h2><p>${desc}</p></article>`).join('')}</div>` }
-function settingsPanel() { const s = getSettings(); return `${pageHead('SITE SETTINGS / THE INVITATION', 'Set the <em>tone.</em>', 'A few small words can change the whole welcome.')}${note('Hero text is saved locally and appears on the homepage in this browser only.')}<div class="dash-split"><form class="dash-card dash-form dash-animate" id="settings-form"><span class="card-kicker">HOMEPAGE / 01</span><h2>The first impression.</h2><label>First line<input name="headline" maxlength="35" required value="${escape(s.headline)}"></label><label>Second line<input name="accent" maxlength="35" required value="${escape(s.accent)}"></label><label>Closing line<input name="subline" maxlength="50" required value="${escape(s.subline)}"></label><button class="dash-action" type="submit">${icon('check')} Save changes</button></form><div class="settings-preview dash-animate"><img src="/images/hero-pasta.jpg" alt=""><div><span>HOMEPAGE PREVIEW</span><h2>${escape(s.headline)}<br><em>${escape(s.accent)}</em></h2><p>${escape(s.subline)}</p><a href="/index.html">View homepage ↗</a></div></div></div>` }
-const adminPanels = { overview:adminOverview, menu:menuPanel, updates:updatesPanel, operations:operationsPanel, settings:settingsPanel }
-function userOverview() { const p=getProfile(), favorites=getFavorites(); return `${pageHead('YOUR FLAVORO / WELCOME', `A little space<br><em>just for you${p.name ? ', '+escape(p.name.split(' ')[0]) : ''}.</em>`, 'Keep the things you love close, and find your way back to the table.')}${note('A local preview: preferences and favorites stay in this browser. Accounts, bookings and orders are not connected.')}<div class="dash-bento"><div class="dash-card dash-welcome user-welcome dash-animate"><div class="welcome-copy"><span class="card-kicker">A GOOD PLACE TO BEGIN</span><h2>Good food.<br>Better together.</h2><p>Make room for the moments worth savoring.</p><a class="dash-action light" href="/pages/menu.html">Explore the menu ${icon('arrow-up-right')}</a></div></div><div class="dash-card stat-card dash-animate"><div class="stat-icon">${icon('heart')}</div><span>YOUR FAVORITES</span><strong>${favorites.length}</strong><p>Saved for another day</p><button data-go="favorites">See favorites ↗</button></div><div class="dash-card stat-card orange-card dash-animate"><div class="stat-icon">${icon('calendar-days')}</div><span>YOUR TABLE</span><strong>—</strong><p>Booking is not connected</p><a href="/pages/reservations.html">View reservation preview ↗</a></div><div class="dash-card dash-shortcuts dash-animate"><div><span class="card-kicker">MAKE YOURSELF AT HOME</span><h2>Your next chapter.</h2></div><div class="shortcut-list"><button data-go="profile">${icon('user-round')}<span><b>Your profile</b><small>Make this space yours</small></span>${icon('arrow-up-right')}</button><button data-go="activity">${icon('clipboard-list')}<span><b>Activity</b><small>Bookings and orders</small></span>${icon('arrow-up-right')}</button><a href="/pages/blog.html">${icon('book-open')}<span><b>The journal</b><small>Stories worth savoring</small></span>${icon('arrow-up-right')}</a></div></div><div class="dash-card dash-image-card dash-animate"><img src="/images/dessert.jpg" alt=""><div><span>A LITTLE JOY, SAVED</span><h2>More to<br><em>savor.</em></h2></div></div></div>` }
-function favoritesPanel() { const saved=getFavorites(); const items=getMenu(); return `${pageHead('YOUR COLLECTION / FAVORITES', 'For another <em>day.</em>', 'A little collection of dishes that caught your eye.')}${note('Favorites are stored in this browser and are not linked to an account.')}<div class="dash-card dash-form dash-animate"><label for="favorite-select">Add a dish to your collection</label><div class="favorite-add"><select id="favorite-select">${items.map(i=>`<option value="${escape(i.id)}">${escape(i.name)}</option>`).join('')}</select><button class="dash-action" id="add-favorite" ${!items.length?'disabled':''}>${icon('plus')} Save dish</button></div></div><div class="favorite-grid">${saved.map(id=>items.find(i=>i.id===id)).filter(Boolean).map(i=>`<article class="dash-card favorite-card dash-animate"><img src="${escape(i.image)}" alt=""><div><span>${escape(i.categoryLabel || i.category)}</span><h2>${escape(i.name)}</h2><button data-unfavorite="${escape(i.id)}">${icon('heart')} Remove</button></div></article>`).join('') || '<p class="empty-message">Nothing saved yet. Choose a dish above to start your collection.</p>'}</div>` }
-function activityPanel() { return `${pageHead('YOUR FLAVORO / ACTIVITY', 'Moments in <em>the making.</em>', 'Your future bookings and orders will find a home here.')}${note('Bookings and ordering are not connected. No reservation or order has been placed.')}<div class="operations-grid"><article class="dash-card operation-card dash-animate"><div class="operation-icon">${icon('calendar-days')}</div><h2>Reservations</h2><p>There are no live reservations to display.</p><a class="dash-action" href="/pages/reservations.html">Explore booking ${icon('arrow-up-right')}</a></article><article class="dash-card operation-card dash-animate"><div class="operation-icon">${icon('shopping-bag')}</div><h2>Orders</h2><p>There are no live orders to display.</p><a class="dash-action" href="/pages/menu.html">Explore menu ${icon('arrow-up-right')}</a></article></div>` }
-function profilePanel() { const p=getProfile(); return `${pageHead('YOUR FLAVORO / PROFILE', 'Make it <em>personal.</em>', 'A few details for your local preview.')}${note('This is not an account. Do not enter sensitive information; these details are stored in this browser only.')}<form id="profile-form" class="dash-card dash-form profile-form dash-animate"><span class="card-kicker">YOUR DETAILS / 01</span><h2>A little about you.</h2><label>Name<input name="name" maxlength="60" value="${escape(p.name)}" placeholder="Your name"></label><label>Email<input name="email" type="email" maxlength="120" value="${escape(p.email)}" placeholder="you@example.com"></label><label>Dining preferences<textarea name="preferences" maxlength="300" rows="4" placeholder="Anything you would like to remember">${escape(p.preferences)}</textarea></label><button class="dash-action" type="submit">${icon('check')} Save preferences</button></form>` }
-const userPanels = { overview:userOverview, favorites:favoritesPanel, activity:activityPanel, profile:profilePanel }
+
+function dishCardItem(item) {
+  const dietBadges = Array.isArray(item.diet)
+    ? item.diet.map(d => `<span class="dish-mini-diet">${escape(d)}</span>`).join('')
+    : ''
+
+  return `
+  <article class="dish-admin-card ios-spring-enter" data-category="${escape(item.category || 'dinner')}" data-search="${escape((item.name + ' ' + (item.categoryLabel || item.category) + ' ' + (item.description || '')).toLowerCase())}">
+    <div class="dish-card-thumb">
+      <img src="${escape(item.image)}" alt="${escape(item.name)}" loading="lazy">
+      <span class="dish-cat-tag">${escape(item.categoryLabel || item.category || 'Mains')}</span>
+    </div>
+    <div class="dish-card-details">
+      <div class="dish-title-row">
+        <h3>${escape(item.name)}</h3>
+        <span class="dish-card-price">$${Number(item.price || 0).toFixed(2)}</span>
+      </div>
+      <p class="dish-card-desc">${escape(item.description || 'Artisanal wood-fired creation.')}</p>
+      ${dietBadges ? `<div class="dish-diet-row">${dietBadges}</div>` : ''}
+    </div>
+    <div class="dish-card-actions">
+      <button type="button" class="dish-act-btn edit" data-edit="${escape(item.id)}" aria-label="Edit ${escape(item.name)}">
+        <i data-lucide="pencil"></i> <span>Edit</span>
+      </button>
+      <button type="button" class="dish-act-btn delete" data-delete="${escape(item.id)}" aria-label="Delete ${escape(item.name)}">
+        <i data-lucide="trash-2"></i>
+      </button>
+    </div>
+  </article>
+  `
+}
+
+function tablesPanel() {
+  const tables = getTables()
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="calendar-days"></i> FLOOR &amp; SEATING</div>
+      <h1>Dining Room <em>Layout.</em></h1>
+      <p>Interactive table assignments, party sizes, service courses, and real-time floor availability.</p>
+    </div>
+    <div class="view-header-actions">
+      <button type="button" class="ios-action-btn primary" id="btn-reset-floor"><i data-lucide="refresh-cw"></i> <span>Reset Evening Session</span></button>
+    </div>
+  </div>
+
+  <div class="tables-full-grid ios-spring-enter">
+    ${tables.map(t => `
+      <div class="table-admin-tile status-${t.status}" data-table-id="${t.id}">
+        <div class="tile-header">
+          <div class="tile-number-group">
+            <span class="tile-id">${t.id}</span>
+            <h4>${t.name}</h4>
+          </div>
+          <span class="table-status-pill ${t.status}">${t.status}</span>
+        </div>
+        <div class="tile-meta">
+          <span><i data-lucide="compass"></i> ${t.zone}</span>
+          <span><i data-lucide="users"></i> ${t.seats} Guests Max</span>
+        </div>
+        <div class="tile-guest-info">
+          <strong>${t.guest || 'Available / Open'}</strong>
+          <small>${t.course ? `Course: ${t.course}` : t.time ? `Reserved: ${t.time}` : 'Table ready for walk-ins'}</small>
+          ${t.spend ? `<span class="tile-spend">Check Total: ${t.spend}</span>` : ''}
+          ${t.note ? `<span class="tile-note"><i data-lucide="info"></i> ${escape(t.note)}</span>` : ''}
+        </div>
+        <div class="tile-action-bar">
+          <button type="button" class="tile-toggle-btn" data-toggle-table="${t.id}">
+            <span>Toggle Status</span> <i data-lucide="chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+  `
+}
+
+function updatesPanel() {
+  const u = getUpdate() || {}
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="megaphone"></i> GUEST ANNOUNCEMENTS</div>
+      <h1>Website <em>Broadcast.</em></h1>
+      <p>Compose announcement modal banners that appear directly for visitors browsing the restaurant site.</p>
+    </div>
+  </div>
+
+  <div class="ios-split-composer ios-spring-enter">
+    <!-- Left Composer Form -->
+    <form class="ios-card composer-form" id="update-form">
+      <div class="card-title-row">
+        <span class="card-kicker">COMPOSE ANNOUNCEMENT</span>
+        <h3>Broadcast Details</h3>
+      </div>
+
+      <label class="ios-label">
+        Small Overline Eyebrow
+        <input name="eyebrow" maxlength="45" value="${escape(u.eyebrow || 'A NOTE FROM FLAVORO')}" required>
+      </label>
+
+      <label class="ios-label">
+        Main Heading Title
+        <input name="title" maxlength="80" value="${escape(u.title || '')}" placeholder="e.g. Autumn Woodfire Tasting Menu Now Open" required>
+      </label>
+
+      <label class="ios-label">
+        Message to Guests
+        <textarea name="message" maxlength="300" rows="4" placeholder="Describe the announcement, seasonal produce, or special event..." required>${escape(u.message || '')}</textarea>
+      </label>
+
+      <div class="ios-form-row">
+        <label class="ios-label">
+          Button Label (Optional)
+          <input name="buttonLabel" maxlength="35" value="${escape(u.buttonLabel || '')}" placeholder="Explore the menu">
+        </label>
+        <label class="ios-label">
+          Destination URL
+          <input name="buttonUrl" maxlength="200" value="${escape(u.buttonUrl || '')}" placeholder="/pages/menu.html">
+        </label>
+      </div>
+
+      <!-- iOS Toggle Switch -->
+      <div class="ios-toggle-row">
+        <label class="ios-switch">
+          <input type="checkbox" name="enabled" ${u.enabled ? 'checked' : ''}>
+          <span class="switch-slider"></span>
+        </label>
+        <div class="toggle-text">
+          <strong>Publish live on website</strong>
+          <small>Display immediately to all guests visiting Flavoro</small>
+        </div>
+      </div>
+
+      <div class="composer-actions">
+        <button type="submit" class="ios-action-btn primary"><i data-lucide="check"></i> <span>Save &amp; Broadcast</span></button>
+        <button type="button" class="ios-action-btn secondary" id="remove-update"><span>Clear Broadcast</span></button>
+      </div>
+    </form>
+
+    <!-- Right: Real-time Live Phone / Device Preview -->
+    <div class="ios-card preview-card">
+      <div class="preview-device-frame">
+        <div class="device-notch"></div>
+        <div class="announcement-live-mock">
+          <span class="mock-spark-icon"><i data-lucide="flame"></i></span>
+          <small data-preview="eyebrow">${escape(u.eyebrow || 'A NOTE FROM FLAVORO')}</small>
+          <h3 data-preview="title">${escape(u.title || 'A little something new at the table.')}</h3>
+          <p data-preview="message">${escape(u.message || 'Your broadcast message will render here in real time as you compose.')}</p>
+          <span class="mock-button-preview" data-preview="buttonLabel">${escape(u.buttonLabel || 'EXPLORE CARTE')} ↗</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  `
+}
+
+function operationsPanel() {
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="activity"></i> SYSTEMS &amp; INFRASTRUCTURE</div>
+      <h1>Operations <em>Grid.</em></h1>
+      <p>Connection status across booking providers, POS terminals, cellar stock, and kitchen hearth pass.</p>
+    </div>
+    <div class="view-header-actions">
+      <button type="button" class="ios-action-btn secondary" id="btn-run-diagnostics"><i data-lucide="refresh-cw"></i> <span>Run System Diagnostics</span></button>
+    </div>
+  </div>
+
+  <div class="operations-cards-grid ios-spring-enter">
+    ${[
+      ['calendar-days', 'Table Reservation Engine', 'Synchronized', 'SevenRooms / OpenTable bridge live for evening bookings and seat holds.', 'active'],
+      ['flame', 'Kitchen Hearth Pass (KDS)', 'Active Cadence', 'Woodfire oven telemetry maintaining continuous 700° oak ember temperature.', 'active'],
+      ['shopping-bag', 'POS & Order Terminal', 'Connected Preview', 'Payment processing and guest order bag checkout testing environment.', 'active'],
+      ['wine', 'Cellar Inventory System', '248 Bottles Tracked', 'Low-intervention, organic, and biodynamic pairings cataloged for flights.', 'active'],
+      ['users', 'Guest CRM & VIP Registry', '1,420 Guests', 'Notes on anniversary milestones, preferred booths, and dietary restrictions.', 'active'],
+      ['shield-check', 'Day-Boat & Farm Supply', 'Verified Delivery', 'Daily seafood harvest and organic grower crates logged at dawn pass.', 'active'],
+    ].map(([ic, title, status, desc, stateClass]) => `
+      <div class="ios-card op-card">
+        <div class="op-card-top">
+          <div class="op-icon-bubble"><i data-lucide="${ic}"></i></div>
+          <span class="op-status-badge ${stateClass}"><span class="badge-dot"></span> ${status}</span>
+        </div>
+        <h3>${title}</h3>
+        <p>${desc}</p>
+      </div>
+    `).join('')}
+  </div>
+  `
+}
+
+function settingsPanel() {
+  const s = getSettings()
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="sliders-horizontal"></i> SITE SETTINGS</div>
+      <h1>Homepage <em>Invitation.</em></h1>
+      <p>Fine-tune the words that greet guests the moment they arrive at Flavoro.</p>
+    </div>
+  </div>
+
+  <div class="ios-split-composer ios-spring-enter">
+    <form class="ios-card composer-form" id="settings-form">
+      <div class="card-title-row">
+        <span class="card-kicker">HERO DISPLAY COPY</span>
+        <h3>The Welcome Invitation</h3>
+      </div>
+
+      <label class="ios-label">
+        First Line (Uppercase Headline)
+        <input name="headline" maxlength="35" required value="${escape(s.headline)}">
+      </label>
+
+      <label class="ios-label">
+        Second Line (Script Accent)
+        <input name="accent" maxlength="35" required value="${escape(s.accent)}">
+      </label>
+
+      <label class="ios-label">
+        Closing Subtitle Line
+        <input name="subline" maxlength="50" required value="${escape(s.subline)}">
+      </label>
+
+      <label class="ios-label">
+        Restaurant Hours Text
+        <input name="hours" maxlength="60" value="${escape(s.hours || 'Wed – Sun: 5:30 PM – 11:00 PM')}">
+      </label>
+
+      <button type="submit" class="ios-action-btn primary"><i data-lucide="check"></i> <span>Save Homepage Copy</span></button>
+    </form>
+
+    <div class="ios-card hero-preview-card">
+      <img src="/images/hero-pasta.jpg" alt="Hero Background">
+      <div class="hero-preview-overlay">
+        <span class="preview-spark-kicker"><i data-lucide="flame"></i> LIVE HOMEPAGE PREVIEW</span>
+        <h2>${escape(s.headline)}<br><em>${escape(s.accent)}</em></h2>
+        <p>${escape(s.subline)}</p>
+        <span class="preview-hours">${escape(s.hours || 'Wed – Sun: 5:30 PM – 11:00 PM')}</span>
+      </div>
+    </div>
+  </div>
+  `
+}
+
+const adminPanels = {
+  overview: adminOverview,
+  menu: menuPanel,
+  tables: tablesPanel,
+  updates: updatesPanel,
+  operations: operationsPanel,
+  settings: settingsPanel,
+}
+
+/* =========================================================================
+   USER DASHBOARD PANELS (GUEST CLUB)
+   ========================================================================= */
+
+function userOverview() {
+  const p = getProfile()
+  const favorites = getFavorites()
+  const reservations = getUserReservations()
+  const nextRes = reservations[0] || null
+  const preferences = getUserPreferences()
+  const firstName = p.name ? p.name.split(' ')[0] : 'Guest'
+
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="compass"></i> PRIVATE SALON &amp; GUEST CLUB</div>
+      <h1>Welcome back, <em>${escape(firstName)}.</em></h1>
+      <p>Your saved tastings, upcoming hearth reservations, and curated flavor preferences.</p>
+    </div>
+    <div class="view-header-actions">
+      <a class="ios-action-btn primary" href="/pages/reservations.html"><i data-lucide="calendar-days"></i> <span>Book a Table</span></a>
+      <a class="ios-action-btn secondary" href="/pages/menu.html"><i data-lucide="utensils-crossed"></i> <span>View Menu</span></a>
+    </div>
+  </div>
+
+  <!-- User KPI & Status Row -->
+  <div class="kpi-grid ios-spring-enter">
+    <div class="ios-card kpi-card" data-go="favorites">
+      <div class="kpi-head">
+        <span class="kpi-label">YOUR FAVORITES</span>
+        <div class="kpi-icon-bubble orange"><i data-lucide="heart"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number">${favorites.length}</span>
+        <span class="kpi-delta neutral">Saved Dishes</span>
+      </div>
+      <span class="kpi-subtext">Click to view your curated collection</span>
+    </div>
+
+    <div class="ios-card kpi-card" data-go="activity">
+      <div class="kpi-head">
+        <span class="kpi-label">UPCOMING TABLE</span>
+        <div class="kpi-icon-bubble amber"><i data-lucide="calendar-days"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number" style="font-size: 26px; line-height: 1.2;">${nextRes ? nextRes.time : 'None'}</span>
+        <span class="kpi-delta positive">${nextRes ? nextRes.status : 'Open'}</span>
+      </div>
+      <span class="kpi-subtext">${nextRes ? `${nextRes.date} · ${nextRes.zone}` : 'Book your next dining experience'}</span>
+    </div>
+
+    <div class="ios-card kpi-card" data-go="taste">
+      <div class="kpi-head">
+        <span class="kpi-label">FLAVOR PASSPORT</span>
+        <div class="kpi-icon-bubble green"><i data-lucide="compass"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number">${preferences.length}</span>
+        <span class="kpi-delta positive">Taste Profiles</span>
+      </div>
+      <span class="kpi-subtext">Oak fire, natural wines, seasonal game</span>
+    </div>
+
+    <div class="ios-card kpi-card" data-go="profile">
+      <div class="kpi-head">
+        <span class="kpi-label">MEMBERSHIP STATUS</span>
+        <div class="kpi-icon-bubble purple"><i data-lucide="shield-check"></i></div>
+      </div>
+      <div class="kpi-main">
+        <span class="kpi-number" style="font-size: 24px;">Founding</span>
+        <span class="kpi-delta positive">Tier II Guest</span>
+      </div>
+      <span class="kpi-subtext">Priority reservation access &amp; cellar flights</span>
+    </div>
+  </div>
+
+  <!-- Next Reservation Spotlight Card -->
+  ${nextRes ? `
+    <div class="ios-card res-spotlight-card ios-spring-enter">
+      <div class="spotlight-visual">
+        <img src="/images/restaurant-interior.jpg" alt="Interior Dining Room">
+        <div class="spotlight-visual-shade"></div>
+        <span class="spotlight-badge"><i data-lucide="check-circle-2"></i> CONFIRMED SITTING</span>
+      </div>
+      <div class="spotlight-content">
+        <span class="card-kicker">YOUR NEXT EVENING WITH US</span>
+        <h2>${escape(nextRes.experience)}</h2>
+        <div class="spotlight-details-grid">
+          <div><i data-lucide="calendar-days"></i> <span>${escape(nextRes.date)}</span></div>
+          <div><i data-lucide="clock"></i> <span>${escape(nextRes.time)}</span></div>
+          <div><i data-lucide="users"></i> <span>${escape(nextRes.guests)} Guests</span></div>
+          <div><i data-lucide="compass"></i> <span>${escape(nextRes.zone)}</span></div>
+        </div>
+        <p class="spotlight-note"><i data-lucide="info"></i> ${escape(nextRes.notes)}</p>
+        <div class="spotlight-actions">
+          <a href="/pages/reservations.html" class="ios-action-btn secondary"><span>Modify Booking</span></a>
+          <a href="/pages/menu.html" class="ios-action-btn primary"><span>Explore Tonight's Carte</span> <i data-lucide="arrow-up-right"></i></a>
+        </div>
+      </div>
+    </div>
+  ` : ''}
+
+  <!-- Taste Profile & Curated Pairings -->
+  <div class="bento-dual-split ios-spring-enter">
+    <div class="ios-card passport-card">
+      <div class="card-title-row">
+        <span class="card-kicker">YOUR FLAVOR PREFERENCES</span>
+        <h3>Culinary Profile</h3>
+      </div>
+      <p class="passport-desc">These flavor memories guide our kitchen and sommelier when preparing your table.</p>
+      <div class="passport-tags-wrap">
+        ${preferences.map(tag => `<span class="passport-pill"><i data-lucide="flame"></i> ${escape(tag)}</span>`).join('')}
+      </div>
+      <button type="button" class="ios-action-btn secondary" data-go="taste"><span>Manage Taste Profile</span> <i data-lucide="chevron-right"></i></button>
+    </div>
+
+    <div class="ios-card sommelier-card">
+      <div class="card-title-row">
+        <span class="card-kicker">CHEF &amp; SOMMELIER NOTE</span>
+        <h3>Harvest Spotlight</h3>
+      </div>
+      <div class="sommelier-pick">
+        <div class="sommelier-icon"><i data-lucide="wine"></i></div>
+        <div>
+          <strong>2021 Jura Savagnin Ouillé</strong>
+          <p>Crisp orchard fruit and flinty minerality, poured specifically to accompany our wood-fired red snapper fillet.</p>
+        </div>
+      </div>
+      <a href="/pages/menu.html#act-confections" class="ios-action-btn secondary"><span>Explore Cellar Flights</span> <i data-lucide="arrow-up-right"></i></a>
+    </div>
+  </div>
+  `
+}
+
+function favoritesPanel() {
+  const saved = getFavorites()
+  const items = getMenu()
+  const favoriteItems = saved.map((id) => items.find((i) => i.id === id)).filter(Boolean)
+
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="heart"></i> CURATED SAVED DISHES</div>
+      <h1>Your Private <em>Collection.</em></h1>
+      <p>Dishes and cellar pairings you have earmarked for your next evening around the table.</p>
+    </div>
+  </div>
+
+  <!-- Add to favorites selector -->
+  <div class="ios-card fav-add-bar ios-spring-enter">
+    <label for="favorite-select" class="fav-add-label">Save an additional dish to your personal collection:</label>
+    <div class="fav-add-controls">
+      <select id="favorite-select" class="ios-select">
+        ${items.map(i => `<option value="${escape(i.id)}">${escape(i.name)} (${escape(i.categoryLabel || i.category)}) — $${Number(i.price || 0).toFixed(2)}</option>`).join('')}
+      </select>
+      <button type="button" class="ios-action-btn primary" id="add-favorite"><i data-lucide="plus"></i> <span>Save Dish</span></button>
+    </div>
+  </div>
+
+  <div class="favorites-gallery-grid ios-spring-enter">
+    ${favoriteItems.length > 0 ? favoriteItems.map(item => `
+      <article class="fav-item-card">
+        <div class="fav-card-image">
+          <img src="${escape(item.image)}" alt="${escape(item.name)}">
+          <span class="fav-cat-tag">${escape(item.categoryLabel || item.category)}</span>
+        </div>
+        <div class="fav-card-body">
+          <div class="fav-card-title-row">
+            <h3>${escape(item.name)}</h3>
+            <span class="fav-price">$${Number(item.price || 0).toFixed(2)}</span>
+          </div>
+          <p class="fav-desc">${escape(item.description || 'Artisanal live hearth creation.')}</p>
+          <div class="fav-card-actions">
+            <button type="button" class="fav-remove-btn" data-unfavorite="${escape(item.id)}">
+              <i data-lucide="trash-2"></i> <span>Remove</span>
+            </button>
+            <a href="/pages/menu.html" class="fav-menu-link">
+              <span>View in Menu</span> <i data-lucide="arrow-up-right"></i>
+            </a>
+          </div>
+        </div>
+      </article>
+    `).join('') : `
+      <div class="empty-fav-state">
+        <i data-lucide="heart"></i>
+        <h3>No saved dishes yet</h3>
+        <p>Use the selector above or browse the menu to save dishes for your next visit.</p>
+        <a href="/pages/menu.html" class="ios-action-btn primary"><span>Explore The Menu</span> ↗</a>
+      </div>
+    `}
+  </div>
+  `
+}
+
+function userActivityPanel() {
+  const reservations = getUserReservations()
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="calendar-days"></i> RESERVATIONS &amp; ACTIVITY</div>
+      <h1>Evenings at <em>Flavoro.</em></h1>
+      <p>Review active table bookings, past culinary experiences, and special dining arrangements.</p>
+    </div>
+    <div class="view-header-actions">
+      <a href="/pages/reservations.html" class="ios-action-btn primary"><i data-lucide="plus"></i> <span>Book New Table</span></a>
+    </div>
+  </div>
+
+  <div class="reservations-ledger-grid ios-spring-enter">
+    ${reservations.map(res => `
+      <div class="ios-card res-ledger-card">
+        <div class="res-ledger-head">
+          <div>
+            <span class="res-badge ${res.status.toLowerCase()}">${res.status}</span>
+            <h3>${escape(res.experience)}</h3>
+          </div>
+          <span class="res-id">${res.id}</span>
+        </div>
+        <div class="res-meta-grid">
+          <div><i data-lucide="calendar-days"></i> <strong>${escape(res.date)}</strong></div>
+          <div><i data-lucide="clock"></i> <strong>${escape(res.time)}</strong></div>
+          <div><i data-lucide="users"></i> <strong>${escape(res.guests)} Guests</strong></div>
+          <div><i data-lucide="compass"></i> <strong>${escape(res.zone)}</strong></div>
+        </div>
+        ${res.notes ? `<p class="res-special-note"><i data-lucide="info"></i> ${escape(res.notes)}</p>` : ''}
+        <div class="res-card-foot">
+          <a href="/pages/reservations.html" class="ios-action-btn secondary"><span>Manage Reservation</span></a>
+          <a href="/pages/contact.html" class="res-help-link"><span>Special requests</span> <i data-lucide="arrow-up-right"></i></a>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+  `
+}
+
+function tasteProfilePanel() {
+  const preferences = getUserPreferences()
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="compass"></i> TASTE PROFILE</div>
+      <h1>Flavor <em>Passport.</em></h1>
+      <p>Configure your taste affinities, beverage preferences, and dining comfort nuances.</p>
+    </div>
+  </div>
+
+  <div class="ios-card taste-manager-card ios-spring-enter">
+    <div class="card-title-row">
+      <span class="card-kicker">CURATED PREFERENCES</span>
+      <h3>Active Flavor Tags</h3>
+    </div>
+    <p class="taste-desc">Our kitchen brigade and front-of-house leads reference these notes before every service.</p>
+
+    <div class="taste-pill-editor" id="taste-pill-container">
+      ${preferences.map((tag, idx) => `
+        <span class="editable-taste-pill">
+          <span>${escape(tag)}</span>
+          <button type="button" class="pill-remove" data-remove-taste="${idx}" aria-label="Remove ${escape(tag)}">&times;</button>
+        </span>
+      `).join('')}
+    </div>
+
+    <div class="add-taste-form">
+      <input type="text" id="new-taste-input" class="ios-input" placeholder="Add a preference (e.g. Rare Game, Oloroso Sherry, Heirloom Brassicas)...">
+      <button type="button" class="ios-action-btn primary" id="btn-add-taste"><i data-lucide="plus"></i> <span>Add Tag</span></button>
+    </div>
+  </div>
+  `
+}
+
+function profilePanel() {
+  const p = getProfile()
+  return `
+  <div class="dash-view-header ios-spring-enter">
+    <div class="view-title-group">
+      <div class="ios-capsule-badge"><i data-lucide="user-round"></i> GUEST PROFILE</div>
+      <h1>Personal <em>Details.</em></h1>
+      <p>Manage your contact details, table setting preferences, and allergen notes.</p>
+    </div>
+  </div>
+
+  <form id="profile-form" class="ios-card profile-card ios-spring-enter">
+    <div class="card-title-row">
+      <span class="card-kicker">MEMBER INFORMATION</span>
+      <h3>Hospitality Settings</h3>
+    </div>
+
+    <div class="ios-form-row">
+      <label class="ios-label">
+        Full Name
+        <input name="name" maxlength="60" value="${escape(p.name)}" placeholder="Your full name" required>
+      </label>
+      <label class="ios-label">
+        Email Address
+        <input name="email" type="email" maxlength="120" value="${escape(p.email)}" placeholder="you@example.com" required>
+      </label>
+    </div>
+
+    <div class="ios-form-row">
+      <label class="ios-label">
+        Phone Number
+        <input name="phone" type="tel" maxlength="30" value="${escape(p.phone || '+1 (555) 234-8900')}" placeholder="+1 (555) 000-0000">
+      </label>
+      <label class="ios-label">
+        Preferred Seating Zone
+        <select name="seating" class="ios-select">
+          <option value="Hearth Counter" ${p.seating === 'Hearth Counter' ? 'selected' : ''}>Fire Hearth Counter</option>
+          <option value="Main Dining Salon" ${p.seating === 'Main Dining Salon' ? 'selected' : ''}>Main Dining Salon (Booth)</option>
+          <option value="Garden Terrace" ${p.seating === 'Garden Terrace' ? 'selected' : ''}>Secret Garden Terrace</option>
+          <option value="Private Alcove" ${p.seating === 'Private Alcove' ? 'selected' : ''}>Private Dining Alcove</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="ios-label">
+      Dining Preferences &amp; Allergen Passport
+      <textarea name="preferences" maxlength="300" rows="4" placeholder="Detail any dietary preferences, anniversary dates, or favorite sommelier pairings...">${escape(p.preferences)}</textarea>
+    </label>
+
+    <button type="submit" class="ios-action-btn primary"><i data-lucide="check"></i> <span>Save Profile Settings</span></button>
+  </form>
+  `
+}
+
+const userPanels = {
+  overview: userOverview,
+  favorites: favoritesPanel,
+  activity: userActivityPanel,
+  taste: tasteProfilePanel,
+  profile: profilePanel,
+}
+
+/* =========================================================================
+   DISH DIALOG (APPLE MODAL SHEET)
+   ========================================================================= */
+
 function dishDialog(id) {
- const item = getMenu().find(i => i.id === id), d = item || {name:'',category:'breakfast',price:'',description:'',image:'/images/breakfast.jpg',diet:[]}
- const overlay=document.querySelector('#dish-dialog-root'); overlay.innerHTML = `<div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dish-dialog-title"><div class="dash-modal-card"><div class="modal-heading"><div><span class="card-kicker">THE COLLECTION</span><h2 id="dish-dialog-title">${item ? 'Edit dish' : 'Add a dish'}</h2></div><button class="dash-close" type="button" aria-label="Close dialog">${icon('x')}</button></div><form id="dish-form"><label>Dish name<input name="name" maxlength="80" required value="${escape(d.name)}"></label><div class="dash-form-row"><label>Category<select name="category">${[['breakfast','Morning'],['lunch','Midday'],['dinner','Evening'],['drinks','Confections & drinks']].map(([v,l])=>`<option value="${v}" ${d.category===v?'selected':''}>${l}</option>`).join('')}</select></label><label>Price ($)<input name="price" type="number" min="0" max="99999" step="0.01" required value="${escape(d.price)}"></label></div><label>Description<textarea name="description" required maxlength="300" rows="3">${escape(d.description)}</textarea></label><label>Image<select name="image">${item ? `<option value="${escape(d.image)}" selected>Current image</option>` : ''}${[['/images/breakfast.jpg','Breakfast'],['/images/menu/breakfast-eggs.jpg','Eggs & toast'],['/images/menu/chocolate-dessert.jpg','Chocolate dessert'],['/images/menu/cocktail.jpg','Cocktail'],['/images/menu/pasta-editorial.jpg','Pasta'],['/images/garden-salad.jpg','Greens'],['/images/market-fish.jpg','Fish'],['/images/dessert.jpg','Dessert'],['/images/cocktails.jpg','Drinks'],['/images/hero-pasta.jpg','Signature dish']].map(([v,l])=>`<option value="${v}" ${d.image===v?'selected':''}>${l}</option>`).join('')}</select></label><fieldset><legend>Dietary labels (verify before use)</legend><div class="diet-checks">${['vegetarian','gluten-free','spicy'].map(v=>`<label class="dash-check"><input type="checkbox" name="diet" value="${v}" ${d.diet?.includes(v)?'checked':''}>${v}</label>`).join('')}</div></fieldset><div class="form-actions"><button type="submit" class="dash-action">${icon('check')} Save dish</button><button type="button" class="dash-secondary dash-cancel">Cancel</button></div></form></div></div>`
- createIcons({icons}); const modal=overlay.querySelector('.dash-modal'), previous=document.activeElement; const close=()=>{overlay.innerHTML='';previous?.focus()}; modal.querySelector('.dash-close').onclick=close; modal.querySelector('.dash-cancel').onclick=close; modal.addEventListener('click', e=>{if(e.target===modal)close()});modal.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const els=[...modal.querySelectorAll('button,input,select,textarea')];if(e.shiftKey&&document.activeElement===els[0]){e.preventDefault();els.at(-1).focus()}else if(!e.shiftKey&&document.activeElement===els.at(-1)){e.preventDefault();els[0].focus()}}});modal.querySelector('.dash-close').focus()
- modal.querySelector('form').onsubmit=e=>{e.preventDefault();const form=e.currentTarget, data=new FormData(form), category=data.get('category');const next={...(item||{id:'dish-'+crypto.randomUUID(),ingredients:[],addons:[],pairing:'',allergens:[],badge:'',prepTime:'',calories:''}),name:clean(data.get('name')),category,categoryLabel:({breakfast:'Morning',lunch:'Midday',dinner:'Evening',drinks:'Confections & drinks'})[category],price:Number(data.get('price')),description:clean(data.get('description')),image:data.get('image'),diet:data.getAll('diet')};if(!next.name || !next.description)return;const list=getMenu();if(item)list.splice(list.findIndex(i=>i.id===id),1,next);else list.push(next);saveMenu(list);show('menu');toast('Dish saved in this browser.')}
+  const item = getMenu().find((i) => i.id === id)
+  const d = item || {
+    name: '',
+    category: 'dinner',
+    price: '',
+    description: '',
+    image: '/images/hero-pasta.jpg',
+    diet: [],
+  }
+
+  const overlay = document.querySelector('#dish-dialog-root')
+  overlay.innerHTML = `
+  <div class="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dish-dialog-title">
+    <div class="dash-modal-backdrop"></div>
+    <div class="dash-modal-card">
+      <div class="modal-heading">
+        <div>
+          <span class="card-kicker">CARTE REVISION</span>
+          <h2 id="dish-dialog-title">${item ? 'Edit Dish' : 'Add New Creation'}</h2>
+        </div>
+        <button class="dash-close" type="button" aria-label="Close dialog"><i data-lucide="x"></i></button>
+      </div>
+
+      <form id="dish-form">
+        <label class="ios-label">Dish Name
+          <input name="name" maxlength="80" required value="${escape(d.name)}" placeholder="e.g. Wood-Fired Heritage Ribeye">
+        </label>
+
+        <div class="ios-form-row">
+          <label class="ios-label">Category
+            <select name="category" class="ios-select">
+              ${[
+                ['breakfast', 'Morning'],
+                ['lunch', 'Midday'],
+                ['dinner', 'Evening'],
+                ['drinks', 'Confections & Drinks'],
+              ].map(([v, l]) => `<option value="${v}" ${d.category === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+          </label>
+          <label class="ios-label">Price ($ USD)
+            <input name="price" type="number" min="0" max="99999" step="0.01" required value="${escape(d.price)}" placeholder="38.00">
+          </label>
+        </div>
+
+        <label class="ios-label">Description &amp; Provenance
+          <textarea name="description" required maxlength="300" rows="3" placeholder="Describe the ingredients, woodfire technique, and seasonal sourcing...">${escape(d.description)}</textarea>
+        </label>
+
+        <label class="ios-label">Plate Photograph
+          <select name="image" class="ios-select">
+            ${item ? `<option value="${escape(d.image)}" selected>Current photograph (${escape(d.image)})</option>` : ''}
+            ${[
+              ['/images/hero-pasta.jpg', 'Signature Hearth Pasta'],
+              ['/images/market-fish.jpg', 'Day-Boat Market Fish'],
+              ['/images/garden-salad.jpg', 'Foraged Greens & Salad'],
+              ['/images/restaurant-interior.jpg', 'Dining Salon Platter'],
+              ['/images/breakfast.jpg', 'Morning Sourdough & Eggs'],
+              ['/images/menu/breakfast-eggs.jpg', 'Heritage Breakfast Eggs'],
+              ['/images/menu/chocolate-dessert.jpg', 'Smoked Chocolate Dessert'],
+              ['/images/dessert.jpg', 'Glazed Embers Dessert'],
+              ['/images/cocktails.jpg', 'Bar Cellar Cocktail'],
+              ['/images/menu/cocktail.jpg', 'Botanical Spirit Cocktail'],
+              ['/images/menu/pasta-editorial.jpg', 'Hand-Rolled Pasta'],
+            ].map(([v, l]) => `<option value="${v}" ${d.image === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select>
+        </label>
+
+        <fieldset class="ios-fieldset">
+          <legend>Dietary Certifications</legend>
+          <div class="diet-checks-row">
+            ${['vegetarian', 'gluten-free', 'spicy'].map(v => `
+              <label class="dash-check">
+                <input type="checkbox" name="diet" value="${v}" ${d.diet?.includes(v) ? 'checked' : ''}>
+                <span>${v}</span>
+              </label>
+            `).join('')}
+          </div>
+        </fieldset>
+
+        <div class="modal-form-actions">
+          <button type="submit" class="ios-action-btn primary"><i data-lucide="check"></i> <span>Save Dish to Carte</span></button>
+          <button type="button" class="ios-action-btn secondary dash-cancel"><span>Cancel</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+  `
+
+  createIcons({ icons })
+  const modal = overlay.querySelector('.dash-modal')
+  const card = overlay.querySelector('.dash-modal-card')
+  const previous = document.activeElement
+
+  // Spring animation for modal entry
+  gsap.fromTo(card, { y: 60, scale: 0.94, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.6)' })
+
+  const close = () => {
+    gsap.to(card, {
+      y: 40,
+      scale: 0.96,
+      opacity: 0,
+      duration: 0.25,
+      ease: 'power2.in',
+      onComplete: () => {
+        overlay.innerHTML = ''
+        previous?.focus()
+      },
+    })
+  }
+
+  modal.querySelector('.dash-close').onclick = close
+  modal.querySelector('.dash-cancel').onclick = close
+  modal.querySelector('.dash-modal-backdrop').onclick = close
+  modal.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close()
+  })
+
+  modal.querySelector('form').onsubmit = (e) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    const data = new FormData(form)
+    const category = data.get('category')
+    const next = {
+      ...(item || {
+        id: 'dish-' + crypto.randomUUID(),
+        ingredients: [],
+        addons: [],
+        pairing: '',
+        allergens: [],
+        badge: '',
+        prepTime: '',
+        calories: '',
+      }),
+      name: clean(data.get('name')),
+      category,
+      categoryLabel: {
+        breakfast: 'Morning',
+        lunch: 'Midday',
+        dinner: 'Evening',
+        drinks: 'Confections & Drinks',
+      }[category] || 'Mains',
+      price: Number(data.get('price')),
+      description: clean(data.get('description')),
+      image: data.get('image'),
+      diet: data.getAll('diet'),
+    }
+
+    if (!next.name || !next.description) return
+    const list = getMenu()
+    if (item) list.splice(list.findIndex((i) => i.id === id), 1, next)
+    else list.unshift(next)
+
+    saveMenu(list)
+    show('menu')
+    toast(item ? 'Dish updated in living carte.' : 'New dish added to menu pass.', 'flame')
+  }
 }
+
+/* =========================================================================
+   EVENT BINDINGS & INTERACTIONS
+   ========================================================================= */
+
 function bind() {
- root.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go))
- root.querySelector('#add-dish')?.addEventListener('click',()=>dishDialog())
- root.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>dishDialog(b.dataset.edit))
- root.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{const item=getMenu().find(i=>i.id===b.dataset.delete);if(item && confirm(`Delete ${item.name} from this local menu?`)){saveMenu(getMenu().filter(i=>i.id!==item.id));show('menu');toast('Dish removed.')}})
- root.querySelector('#dash-menu-search')?.addEventListener('input',e=>{let n=0;root.querySelectorAll('.dash-menu-row').forEach(row=>{row.hidden=!row.dataset.search.includes(e.target.value.trim().toLowerCase());if(!row.hidden)n++});root.querySelector('#no-menu-results').hidden=n>0})
- root.querySelector('#settings-form')?.addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.currentTarget);saveSettings({...getSettings(),headline:clean(f.get('headline')),accent:clean(f.get('accent')),subline:clean(f.get('subline'))});show('settings');toast('Homepage text saved locally.')})
- root.querySelector('#profile-form')?.addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.currentTarget);saveProfile({name:clean(f.get('name')),email:clean(f.get('email')),preferences:clean(f.get('preferences'))});toast('Preferences saved locally.')})
- root.querySelector('#update-form')?.addEventListener('input',e=>{const form=e.currentTarget;['eyebrow','title','message','buttonLabel'].forEach(key=>{const el=root.querySelector(`[data-preview="${key}"]`); if(el)el.textContent=form.elements[key].value || ({eyebrow:'A NOTE FROM FLAVORO',title:'A little something new.',message:'Your message to guests will appear here.',buttonLabel:'DISCOVER MORE'})[key]})})
- root.querySelector('#update-form')?.addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.currentTarget);const url=clean(f.get('buttonUrl'));if(url && (!url.startsWith('/') || url.startsWith('//'))){toast('Use an internal path beginning with /');return}saveUpdate({eyebrow:clean(f.get('eyebrow')),title:clean(f.get('title')),message:clean(f.get('message')),buttonLabel:clean(f.get('buttonLabel')),buttonUrl:url,enabled:f.has('enabled'),id:crypto.randomUUID()});toast('Update saved in this browser.')})
- root.querySelector('#remove-update')?.addEventListener('click',()=>{saveUpdate(null);show('updates');toast('Update removed.')})
- root.querySelector('#add-favorite')?.addEventListener('click',()=>{const id=root.querySelector('#favorite-select').value;const fav=getFavorites();if(id&&!fav.includes(id)){fav.push(id);saveFavorites(fav)}show('favorites');toast('Saved to your collection.')})
- root.querySelectorAll('[data-unfavorite]').forEach(b=>b.onclick=()=>{saveFavorites(getFavorites().filter(id=>id!==b.dataset.unfavorite));show('favorites');toast('Removed from your collection.')})
+  // Navigation shortcuts
+  root.querySelectorAll('[data-go]').forEach((b) => {
+    b.onclick = () => show(b.dataset.go)
+  })
+
+  // Quick Dish modal
+  root.querySelector('#btn-quick-dish')?.addEventListener('click', () => dishDialog())
+  root.querySelector('#add-dish')?.addEventListener('click', () => dishDialog())
+  root.querySelectorAll('[data-edit]').forEach((b) => (b.onclick = () => dishDialog(b.dataset.edit)))
+
+  // Delete dish
+  root.querySelectorAll('[data-delete]').forEach((b) => {
+    b.onclick = () => {
+      const item = getMenu().find((i) => i.id === b.dataset.delete)
+      if (item && confirm(`Remove "${item.name}" from the active carte?`)) {
+        saveMenu(getMenu().filter((i) => i.id !== item.id))
+        show('menu')
+        toast('Dish removed from carte.', 'info')
+      }
+    }
+  })
+
+  // Menu Search & Filter
+  const searchInput = root.querySelector('#dash-menu-search')
+  const clearBtn = root.querySelector('#search-clear-btn')
+
+  if (searchInput) {
+    let activeCat = 'all'
+    const filterItems = () => {
+      const query = searchInput.value.trim().toLowerCase()
+      clearBtn.hidden = !query
+      let visibleCount = 0
+
+      root.querySelectorAll('.dish-admin-card').forEach((card) => {
+        const matchesQuery = card.dataset.search.includes(query)
+        const matchesCat = activeCat === 'all' || card.dataset.category === activeCat
+        const isVisible = matchesQuery && matchesCat
+        card.hidden = !isVisible
+        if (isVisible) visibleCount++
+      })
+
+      const noRes = root.querySelector('#no-menu-results')
+      if (noRes) noRes.hidden = visibleCount > 0
+    }
+
+    searchInput.addEventListener('input', filterItems)
+    clearBtn?.addEventListener('click', () => {
+      searchInput.value = ''
+      filterItems()
+      searchInput.focus()
+    })
+
+    root.querySelectorAll('#menu-category-pills .filter-pill').forEach((pill) => {
+      pill.addEventListener('click', () => {
+        root.querySelectorAll('#menu-category-pills .filter-pill').forEach((p) => p.classList.remove('is-active'))
+        pill.classList.add('is-active')
+        activeCat = pill.dataset.cat
+        filterItems()
+      })
+    })
+  }
+
+  // Chart Segment Buttons
+  root.querySelectorAll('#chart-segments .segment-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      root.querySelectorAll('#chart-segments .segment-btn').forEach((b) => b.classList.remove('is-active'))
+      btn.classList.add('is-active')
+      currentChartPeriod = btn.dataset.period
+
+      // Animate chart morph
+      const pathArea = root.querySelector('#chart-area')
+      const pathStroke = root.querySelector('#chart-stroke')
+
+      let newAreaD = 'M 40,170 C 120,165 200,140 280,120 C 360,105 440,145 520,75 C 600,35 680,50 760,25 C 840,18 880,35 900,20 L 900,200 L 40,200 Z'
+      let newStrokeD = 'M 40,170 C 120,165 200,140 280,120 C 360,105 440,145 520,75 C 600,35 680,50 760,25 C 840,18 880,35 900,20'
+
+      if (currentChartPeriod === 'week') {
+        newAreaD = 'M 40,150 C 140,110 240,135 340,90 C 440,80 540,110 640,40 C 740,20 840,55 900,30 L 900,200 L 40,200 Z'
+        newStrokeD = 'M 40,150 C 140,110 240,135 340,90 C 440,80 540,110 640,40 C 740,20 840,55 900,30'
+      } else if (currentChartPeriod === 'month') {
+        newAreaD = 'M 40,180 C 130,130 220,150 320,100 C 420,60 520,80 620,45 C 720,30 820,40 900,15 L 900,200 L 40,200 Z'
+        newStrokeD = 'M 40,180 C 130,130 220,150 320,100 C 420,60 520,80 620,45 C 720,30 820,40 900,15'
+      }
+
+      gsap.to(pathStroke, { attr: { d: newStrokeD }, duration: 0.6, ease: 'power2.inOut' })
+      gsap.to(pathArea, { attr: { d: newAreaD }, duration: 0.6, ease: 'power2.inOut' })
+      toast(`Viewing telemetry for ${btn.textContent}`, 'info')
+    })
+  })
+
+  // Table Toggle Status (Admin)
+  root.querySelectorAll('[data-toggle-table]').forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.dataset.toggleTable
+      const tables = getTables()
+      const t = tables.find((item) => item.id === id)
+      if (!t) return
+
+      const states = ['open', 'reserved', 'seated', 'plating', 'clearing']
+      const nextIdx = (states.indexOf(t.status) + 1) % states.length
+      t.status = states[nextIdx]
+      saveTables(tables)
+      show('tables')
+      toast(`${t.name} status updated to: ${t.status.toUpperCase()}`, 'flame')
+    }
+  })
+
+  // Reset Floor Session
+  root.querySelector('#btn-reset-floor')?.addEventListener('click', () => {
+    localStorage.removeItem('flavoro.demo.tables.v1')
+    show('tables')
+    toast('Evening seating session reset to defaults.', 'info')
+  })
+
+  // Run System Diagnostics
+  root.querySelector('#btn-run-diagnostics')?.addEventListener('click', () => {
+    toast('Running diagnostics: POS, KDS, & SevenRooms connectivity nominal.', 'success')
+  })
+
+  // Settings form
+  root.querySelector('#settings-form')?.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const f = new FormData(e.currentTarget)
+    saveSettings({
+      ...getSettings(),
+      headline: clean(f.get('headline')),
+      accent: clean(f.get('accent')),
+      subline: clean(f.get('subline')),
+      hours: clean(f.get('hours')),
+    })
+    show('settings')
+    toast('Homepage invitation text saved.', 'success')
+  })
+
+  // Profile form
+  root.querySelector('#profile-form')?.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const f = new FormData(e.currentTarget)
+    saveProfile({
+      ...getProfile(),
+      name: clean(f.get('name')),
+      email: clean(f.get('email')),
+      phone: clean(f.get('phone')),
+      seating: clean(f.get('seating')),
+      preferences: clean(f.get('preferences')),
+    })
+    toast('Guest profile & hospitality notes saved.', 'success')
+  })
+
+  // Updates form (realtime typing preview)
+  const updateForm = root.querySelector('#update-form')
+  if (updateForm) {
+    updateForm.addEventListener('input', () => {
+      ;['eyebrow', 'title', 'message', 'buttonLabel'].forEach((key) => {
+        const el = root.querySelector(`[data-preview="${key}"]`)
+        if (el) {
+          el.textContent =
+            updateForm.elements[key].value ||
+            {
+              eyebrow: 'A NOTE FROM FLAVORO',
+              title: 'A little something new.',
+              message: 'Your message to guests will appear here.',
+              buttonLabel: 'DISCOVER MORE',
+            }[key]
+        }
+      })
+    })
+
+    updateForm.addEventListener('submit', (e) => {
+      e.preventDefault()
+      const f = new FormData(updateForm)
+      const url = clean(f.get('buttonUrl'))
+      if (url && (!url.startsWith('/') || url.startsWith('//'))) {
+        toast('Use an internal path beginning with /', 'info')
+        return
+      }
+      saveUpdate({
+        eyebrow: clean(f.get('eyebrow')),
+        title: clean(f.get('title')),
+        message: clean(f.get('message')),
+        buttonLabel: clean(f.get('buttonLabel')),
+        buttonUrl: url,
+        enabled: f.has('enabled'),
+        id: crypto.randomUUID(),
+      })
+      toast('Broadcast updated for website visitors.', 'flame')
+    })
+
+    root.querySelector('#remove-update')?.addEventListener('click', () => {
+      saveUpdate(null)
+      show('updates')
+      toast('Broadcast notice removed.', 'info')
+    })
+  }
+
+  // Favorites add
+  root.querySelector('#add-favorite')?.addEventListener('click', () => {
+    const sel = root.querySelector('#favorite-select')
+    if (!sel) return
+    const id = sel.value
+    const fav = getFavorites()
+    if (id && !fav.includes(id)) {
+      fav.unshift(id)
+      saveFavorites(fav)
+      show('favorites')
+      toast('Dish saved to your private collection.', 'flame')
+    } else {
+      toast('This dish is already in your favorites.', 'info')
+    }
+  })
+
+  // Favorites remove
+  root.querySelectorAll('[data-unfavorite]').forEach((b) => {
+    b.onclick = () => {
+      const fav = getFavorites().filter((id) => id !== b.dataset.unfavorite)
+      saveFavorites(fav)
+      show('favorites')
+      toast('Dish removed from saved collection.', 'info')
+    }
+  })
+
+  // Taste tags remove
+  root.querySelectorAll('[data-remove-taste]').forEach((b) => {
+    b.onclick = () => {
+      const idx = Number(b.dataset.removeTaste)
+      const list = getUserPreferences()
+      list.splice(idx, 1)
+      saveUserPreferences(list)
+      show('taste')
+      toast('Taste preference tag removed.', 'info')
+    }
+  })
+
+  // Taste tag add
+  const addTasteInput = root.querySelector('#new-taste-input')
+  root.querySelector('#btn-add-taste')?.addEventListener('click', () => {
+    const val = clean(addTasteInput?.value)
+    if (!val) return
+    const list = getUserPreferences()
+    if (!list.includes(val)) {
+      list.push(val)
+      saveUserPreferences(list)
+      show('taste')
+      toast(`Added "${val}" to taste passport.`, 'success')
+    }
+  })
 }
-if (isSignedIn(role)) show('overview')
+
+// Initial render
+show('overview')

@@ -1,5 +1,6 @@
 export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } = {}) {
   const cleanups = []
+  const page = document.body.dataset.page || 'home'
   const header = document.querySelector('[data-header]')
   if (header) {
     const setHeader = () => header.classList.toggle('is-scrolled', window.scrollY > 40)
@@ -14,7 +15,8 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
     return noopCleanup
   }
 
-  const heroTl = gsap.timeline({ paused: !autoPlayHero, defaults: { ease: 'power3.out' } })
+  const shouldHoldForPreloader = page === 'home' && !autoPlayHero
+  const heroTl = gsap.timeline({ paused: shouldHoldForPreloader, defaults: { ease: 'power3.out' } })
   const homeHero = document.querySelector('.home-hero')
   if (homeHero) {
     const flourish = document.querySelectorAll('.hero-flourish path')
@@ -80,7 +82,14 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
     cursor.remove()
     ScrollTrigger.getAll().forEach(trigger => trigger.kill())
   }
-  cleanup.playHero = () => heroTl.play()
+  cleanup.playHero = () => {
+    if (heroTl) heroTl.play()
+  }
   cleanup.heroTl = heroTl
+
+  if (!shouldHoldForPreloader) {
+    cleanup.playHero()
+  }
+
   return cleanup
 }

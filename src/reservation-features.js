@@ -220,7 +220,7 @@ function renderReservationLiveMenu(container) {
       <!-- Live Selection Summary Banner -->
       <div class="res-selection-summary-banner">
         <div class="summary-left">
-          <i data-lucide="sparkles"></i>
+          <i data-lucide="flame"></i>
           <div>
             <strong>Attached to Your Table Reservation:</strong>
             <p>
