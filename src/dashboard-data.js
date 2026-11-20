@@ -1,4 +1,9 @@
-import { menuItems } from './menu-data.js'
+import {
+  getMenuItems,
+  getTables as readStoreTables,
+  saveMenuItems,
+  saveTables as writeStoreTables,
+} from './data/store.js'
 
 const keys = {
   menu: 'flavoro.demo.menu.v1',
@@ -9,7 +14,6 @@ const keys = {
   tables: 'flavoro.demo.tables.v1',
   reservations: 'flavoro.demo.reservations.v1',
   activity: 'flavoro.demo.activity.v1',
-  userReservations: 'flavoro.demo.user.reservations.v1',
   userPreferences: 'flavoro.demo.user.preferences.v1',
 }
 
@@ -36,11 +40,11 @@ export const defaults = {
   serviceStatus: 'Dinner Service Active',
 }
 
-export const getMenu = () => {
-  const data = read(keys.menu, null)
-  return Array.isArray(data) ? data : structuredClone(menuItems)
-}
-export const saveMenu = (value) => write(keys.menu, value)
+// Menu data now lives in the central reservation store so admin edits are
+// reflected in reservation pre-orders. The legacy key is migrated on first run
+// by `data/store.js#ensureSeeded`.
+export const getMenu = () => getMenuItems()
+export const saveMenu = (value) => saveMenuItems(value)
 
 export const getUpdate = () => read(keys.update, null)
 export const saveUpdate = (value) => write(keys.update, value)
@@ -57,6 +61,7 @@ export const getProfile = () =>
 export const saveProfile = (value) => write(keys.profile, value)
 
 export const getSettings = () => ({ ...defaults, ...read(keys.settings, {}) })
+export const hasSavedSettings = () => read(keys.settings, null) !== null
 export const saveSettings = (value) => write(keys.settings, value)
 
 export const getFavorites = () => {
@@ -79,8 +84,9 @@ const defaultTables = [
   { id: 'T8', name: 'Table 08', zone: 'Fire Hearth Counter', seats: 2, status: 'open', seatsAvailable: 2 },
 ]
 
-export const getTables = () => read(keys.tables, defaultTables)
-export const saveTables = (value) => write(keys.tables, value)
+// Tables are shared with the reservation availability engine.
+export const getTables = () => readStoreTables()
+export const saveTables = (value) => writeStoreTables(value)
 
 // Admin Activity Timeline
 const defaultActivity = [
@@ -93,33 +99,6 @@ const defaultActivity = [
 
 export const getActivity = () => read(keys.activity, defaultActivity)
 export const saveActivity = (value) => write(keys.activity, value)
-
-// User Reservations
-const defaultUserReservations = [
-  {
-    id: 'res-101',
-    date: 'Friday, Nov 14, 2026',
-    time: '7:30 PM',
-    guests: 2,
-    zone: 'Fire Hearth Counter',
-    status: 'Confirmed',
-    experience: 'The 7-Course Seasonal Fire Journey',
-    notes: 'Anniversary celebration · Sommelier flight requested',
-  },
-  {
-    id: 'res-102',
-    date: 'Saturday, Dec 5, 2026',
-    time: '8:00 PM',
-    guests: 4,
-    zone: 'Main Dining Salon',
-    status: 'Upcoming',
-    experience: 'The Grand Carte Dining Experience',
-    notes: 'Window booth requested',
-  },
-]
-
-export const getUserReservations = () => read(keys.userReservations, defaultUserReservations)
-export const saveUserReservations = (value) => write(keys.userReservations, value)
 
 // User Flavor Passport Preferences
 const defaultPreferences = [

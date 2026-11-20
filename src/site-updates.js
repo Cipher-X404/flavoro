@@ -1,15 +1,31 @@
-import { getSettings, getUpdate } from './dashboard-data.js'
+import { getSettings, getUpdate, hasSavedSettings } from './dashboard-data.js'
 
+/**
+ * The home page ships with its own hero copy. The dashboard's hero fields only
+ * take over when an admin has actually saved them — otherwise every visitor
+ * would be shown the placeholder words that ship with the settings form.
+ */
 export function applyLocalSettings() {
-  const spans = document.querySelectorAll('.home-hero .hero-title > span')
-  if (spans.length !== 3) return
+  if (!hasSavedSettings()) return
+  const title = document.querySelector('.hm-hero .hero-title')
+  if (!title) return
+
   const settings = getSettings()
-  spans[0].textContent = settings.headline
-  const words = settings.accent.trim().split(/\s+/)
-  spans[1].replaceChildren()
-  if (words.length > 1) spans[1].append(document.createTextNode(words.shift() + ' '))
-  const em = document.createElement('em'); em.textContent = words.join(' '); spans[1].append(em)
-  spans[2].textContent = settings.subline
+  const headline = (settings.headline || '').trim()
+  const accent = (settings.accent || '').trim()
+  if (!headline && !accent) return
+
+  const line = (text, className) => {
+    const span = document.createElement('span')
+    span.className = className
+    span.textContent = text
+    return span
+  }
+
+  title.replaceChildren(
+    line(headline + ' ', 'hm-hero-line'),
+    line(accent, 'hm-hero-line hm-hero-line--last'),
+  )
 }
 
 export function showLocalUpdate() {
