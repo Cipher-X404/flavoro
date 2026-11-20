@@ -67,7 +67,7 @@ export function renderEndlessSection(options = {}) {
 
       <div class="endless-title-wrap">
         <span class="endless-eyebrow">${eyebrow}</span>
-        <h2 class="endless-title">${title}</h2>
+        <h1 class="endless-title">${title}</h1>
         <p class="endless-subline">${subline}</p>
       </div>
 

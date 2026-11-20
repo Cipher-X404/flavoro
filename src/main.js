@@ -4,6 +4,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { initSmoothScroll } from './animations/smooth-scroll.js'
 import { initSiteAnimations } from './animations/site-animations.js'
+import { initHomeStory } from './animations/home-story.js'
+import { initHomeHero } from './home-hero.js'
 import { initPreloader, FLAVORO_WORDS } from './animations/preloader.js'
 import { initializeIcons } from './icons.js'
 import { renderPage } from './pages.js'
@@ -17,6 +19,10 @@ let teardownSmoothScroll
 let teardownAnimations
 let teardownPreloader
 let teardownEndless
+let teardownHome
+let teardownHomeHero
+let teardownContact
+let teardownJournal
 
 function initialize() {
   const page = document.body.dataset.page || 'home'
@@ -25,7 +31,7 @@ function initialize() {
   }
   document.querySelector('#app').innerHTML = renderPage(page)
   if (page === 'home') applyLocalSettings()
-  document.querySelectorAll('img:not(.hero-bg):not(.page-hero-bg)').forEach(image => {
+  document.querySelectorAll('img:not(.hero-bg):not(.page-hero-bg):not([data-eager])').forEach(image => {
     image.loading = 'lazy'
     image.decoding = 'async'
   })
@@ -53,12 +59,18 @@ function initialize() {
 
   teardownSmoothScroll = initSmoothScroll({ Lenis, gsap, ScrollTrigger })
   teardownAnimations = initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero: false })
+  if (page === 'home') {
+    // the live copy first: it must run even if the scroll choreography fails
+    teardownHomeHero = initHomeHero()
+    teardownHome = initHomeStory()
+  }
 
   if (page === 'home') {
     teardownPreloader = initPreloader({
       words: FLAVORO_WORDS,
       onReveal: () => {
         teardownAnimations?.playHero?.()
+        teardownHome?.playHero?.()
         if (!reduceMotion && !heroVideo?.paused) heroVideo?.play()?.catch?.(() => {})
       },
       onComplete: () => {
@@ -189,16 +201,23 @@ function initialize() {
 
   if (page === 'checkout') import('./checkout.js').then(({ initCheckout }) => initCheckout())
 
+  if (page === 'reservation-confirmation') {
+    import('./reservation-confirmation.js').then(({ initReservationConfirmation }) => initReservationConfirmation())
+  }
+
   if (page === 'menu') {
     import('./menu-features.js').then(({ initMenuFeatures }) => initMenuFeatures())
   } else if (page === 'reservations') {
     import('./reservation-features.js').then(({ initReservationFeatures }) => initReservationFeatures())
-  } else if (page === 'blog' || page === 'contact' || page === 'about') {
+  } else if (page === 'blog') {
+    import('./journal-page.js').then(({ initJournalPage }) => { teardownJournal = initJournalPage() })
+  } else if (page === 'contact') {
     import('./editorial-features.js').then(({ initEditorialFeatures }) => initEditorialFeatures())
-    if (page === 'about') {
-      initTeamLanyardRail()
-      initializeIcons()
-    }
+    import('./contact-page.js').then(({ initContactPage }) => { teardownContact = initContactPage() })
+  } else if (page === 'about') {
+    import('./editorial-features.js').then(({ initEditorialFeatures }) => initEditorialFeatures())
+    initTeamLanyardRail()
+    initializeIcons()
   } else if (page === 'gallery') {
     teardownEndless = initEndlessCorridor()
   }
@@ -210,6 +229,10 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else initialize()
 
 if (import.meta.hot) import.meta.hot.dispose(() => {
+  teardownHome?.()
+  teardownHomeHero?.()
+  teardownContact?.()
+  teardownJournal?.()
   teardownPreloader?.destroy?.()
   teardownAnimations?.()
   teardownSmoothScroll?.()

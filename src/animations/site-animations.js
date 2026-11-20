@@ -17,17 +17,12 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
 
   const shouldHoldForPreloader = page === 'home' && !autoPlayHero
   const heroTl = gsap.timeline({ paused: shouldHoldForPreloader, defaults: { ease: 'power3.out' } })
-  const homeHero = document.querySelector('.home-hero')
-  if (homeHero) {
-    const flourish = document.querySelectorAll('.hero-flourish path')
-    flourish.forEach(path => { const length = path.getTotalLength(); gsap.set(path, { strokeDasharray: length, strokeDashoffset: length }) })
-    heroTl.from('.home-hero .hero-bg', { scale: 1.1, duration: 2.2, ease: 'power2.out' })
-      .from('.hero-frame', { opacity: 0, scale: .97, duration: 1.2 }, '-=1.7')
-      .from('.hero-overline', { y: 20, opacity: 0, duration: .8 }, '-=1.3')
-      .from('.hero-title span', { yPercent: 45, opacity: 0, stagger: .16, duration: 1.2 }, '-=1')
-      .to(flourish, { strokeDashoffset: 0, duration: 1.5, stagger: .15, ease: 'power2.inOut' }, '-=.8')
-      .from('.hero-bottom-copy > *, .hero-orbit, .hero-footer-line', { y: 20, opacity: 0, stagger: .12, duration: .8 }, '-=.7')
-  } else {
+  // The home hero has its own choreography (see animations/home-story.js), so this
+  // bundle only handles the interior page heroes.
+  if (document.querySelector('.page-hero')) {
+    // Only build this intro when the page actually has a page hero — otherwise GSAP
+    // logs "target not found" warnings on pages that ship their own hero (the About
+    // story, checkout, gallery, auth screens, …).
     heroTl.from('.page-hero-bg', { scale: 1.12, duration: 1.8 })
       .from('.page-hero .hero-kicker', { y: 24, opacity: 0, duration: .7 }, '-=1.05')
       .from('.page-hero .split-title', { yPercent: 25, opacity: 0, duration: 1 }, '-=.65')

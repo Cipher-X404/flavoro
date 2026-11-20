@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:reservations": "node scripts/verify-reservations.mjs",
+    "verify:contact": "node scripts/verify-contact.mjs"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

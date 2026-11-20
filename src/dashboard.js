@@ -4,71 +4,9 @@ import {
   createIcons,
   LayoutDashboard,
   UtensilsCrossed,
-  Megaphone,
-  ClipboardList,
-  SlidersHorizontal,
-  Heart,
-  UserRound,
-  ArrowUpRight,
-  Plus,
-  Pencil,
-  Trash2,
-  X,
-  Check,
-  CircleHelp,
-  Globe,
-  ShoppingBag,
-  CalendarDays,
-  Image,
-  ChevronRight,
-  ExternalLink,
-  BookOpen,
-  Flame,
-  Bell,
-  Activity,
-  TrendingUp,
-  Clock,
-  Search,
-  ShieldCheck,
-  Users,
-  Wine,
-  Leaf,
-  RefreshCw,
-  CheckCircle2,
-  ArrowRight,
-  Eye,
-  Sliders,
-  DollarSign,
-  Compass,
-  Zap,
-  Info,
-  ChevronDown
-} from 'lucide'
-import { isSignedIn, logout } from './local-auth.js'
-import {
-  getMenu,
-  saveMenu,
-  getUpdate,
-  saveUpdate,
-  getProfile,
-  saveProfile,
-  getSettings,
-  saveSettings,
-  getFavorites,
-  saveFavorites,
-  getTables,
-  saveTables,
-  getActivity,
-  saveActivity,
-  getUserReservations,
-  saveUserReservations,
-  getUserPreferences,
-  saveUserPreferences,
-} from './dashboard-data.js'
-
-const icons = {
-  LayoutDashboard,
-  UtensilsCrossed,
+  Utensils,
+  User,
+  ChefHat,
   Megaphone,
   ClipboardList,
   SlidersHorizontal,
@@ -108,6 +46,91 @@ const icons = {
   Zap,
   Info,
   ChevronDown,
+  Ban,
+  RotateCcw,
+} from 'lucide'
+import { isSignedIn, logout } from './local-auth.js'
+import {
+  getMenu,
+  saveMenu,
+  getUpdate,
+  saveUpdate,
+  getProfile,
+  saveProfile,
+  getSettings,
+  saveSettings,
+  getFavorites,
+  saveFavorites,
+  getTables,
+  saveTables,
+  getActivity,
+  saveActivity,
+  getUserPreferences,
+  saveUserPreferences,
+} from './dashboard-data.js'
+import {
+  bindAdminReservations,
+  bindCustomerReservations,
+  getAdminReservationBadge,
+  getCustomerBookingCount,
+  getNextCustomerReservationView,
+  markDrawerAllRead,
+  markDrawerNotificationRead,
+  renderAdminReservationsPanel,
+  renderCustomerReservationsPanel,
+  renderNotificationFeed,
+} from './dashboard-reservations.js'
+import { resetCollection } from './data/store.js'
+
+const resetTableCollection = () => resetCollection('tables')
+
+const icons = {
+  LayoutDashboard,
+  UtensilsCrossed,
+  Utensils,
+  User,
+  ChefHat,
+  Megaphone,
+  ClipboardList,
+  SlidersHorizontal,
+  Heart,
+  UserRound,
+  ArrowUpRight,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  CircleHelp,
+  Globe,
+  ShoppingBag,
+  CalendarDays,
+  Image,
+  ChevronRight,
+  ExternalLink,
+  BookOpen,
+  Flame,
+  Bell,
+  Activity,
+  TrendingUp,
+  Clock,
+  Search,
+  ShieldCheck,
+  Users,
+  Wine,
+  Leaf,
+  RefreshCw,
+  CheckCircle2,
+  ArrowRight,
+  Eye,
+  Sliders,
+  DollarSign,
+  Compass,
+  Zap,
+  Info,
+  ChevronDown,
+  Ban,
+  RotateCcw,
 }
 
 const admin = document.body.dataset.dashboard === 'admin'
@@ -126,7 +149,8 @@ const clean = (value) => String(value ?? '').trim().replace(/[<>]/g, '')
 const adminNav = [
   ['overview', 'layout-dashboard', 'Overview', ''],
   ['menu', 'utensils-crossed', 'Menu Studio', 'Live'],
-  ['tables', 'calendar-days', 'Floor & Tables', '8'],
+  ['reservations', 'clipboard-list', 'Reservations', ''],
+  ['tables', 'calendar-days', 'Floor & Tables', ''],
   ['updates', 'megaphone', 'Announcements', ''],
   ['operations', 'activity', 'Operations', 'Active'],
   ['settings', 'sliders-horizontal', 'Settings', ''],
@@ -135,7 +159,7 @@ const adminNav = [
 const userNav = [
   ['overview', 'layout-dashboard', 'Home', ''],
   ['favorites', 'heart', 'Saved Dishes', '3'],
-  ['activity', 'calendar-days', 'Reservations', 'Next'],
+  ['activity', 'calendar-days', 'Reservations', ''],
   ['taste', 'compass', 'Taste Profile', 'VIP'],
   ['profile', 'user-round', 'Account', ''],
 ]
@@ -182,6 +206,18 @@ function toast(text, type = 'info') {
 function shell() {
   const profile = getProfile()
   const guestFirstName = profile.name ? profile.name.split(' ')[0] : 'Guest'
+  const notificationFeed = renderNotificationFeed(role)
+  const navBadge = (id, fallback) => {
+    if (admin && id === 'reservations') {
+      const count = getAdminReservationBadge()
+      return count ? String(count) : ''
+    }
+    if (!admin && id === 'activity') {
+      const count = getCustomerBookingCount()
+      return count ? String(count) : fallback
+    }
+    return fallback
+  }
 
   root.innerHTML = `
   <header class="ios-glass-bar">
@@ -212,7 +248,7 @@ function shell() {
       <div class="bar-actions">
         <button type="button" class="bar-btn icon-only" id="btn-notifications" aria-label="Notifications">
           <i data-lucide="bell"></i>
-          <span class="bar-notif-dot"></span>
+          ${notificationFeed.unread ? '<span class="bar-notif-dot"></span>' : ''}
         </button>
 
         <a class="bar-btn site-btn" href="/index.html">
@@ -245,10 +281,14 @@ function shell() {
       </button>
     </div>
     <div class="drawer-body">
+      <div class="rsv-drawer-feed">
+        ${notificationFeed.html}
+      </div>
+      <div class="rsv-drawer-head"><span>Studio activity</span></div>
       <div class="drawer-activity-feed">
         ${getActivity().map(act => `
           <div class="drawer-feed-item">
-            <div class="feed-icon-wrap"><i data-lucide="${act.icon || 'activity'}"></i></div>
+            <div class="feed-icon-wrap"><i data-lucide="${escape(act.icon || 'activity')}"></i></div>
             <div class="feed-copy">
               <p>${escape(act.text)}</p>
               <span class="feed-time">${escape(act.time)}</span>
@@ -265,7 +305,9 @@ function shell() {
   <nav class="ios-dock-wrap" aria-label="Dashboard navigation">
     <div class="dash-dock" id="dash-dock">
       <div class="dock-shelf">
-        ${nav.map(([id, ic, label, badge]) => `
+        ${nav.map(([id, ic, label, badge]) => {
+          const shownBadge = navBadge(id, badge)
+          return `
           <button type="button"
             class="dock-item ${current === id ? 'is-active' : ''}"
             data-panel="${id}"
@@ -274,12 +316,12 @@ function shell() {
             ${current === id ? 'aria-current="page"' : ''}>
             <div class="dock-icon-box">
               <i data-lucide="${ic}"></i>
-              ${badge ? `<span class="dock-badge">${badge}</span>` : ''}
+              ${shownBadge ? `<span class="dock-badge">${shownBadge}</span>` : ''}
             </div>
             <span class="dock-tooltip">${label}</span>
             <span class="dock-active-pill" aria-hidden="true"></span>
           </button>
-        `).join('')}
+        `}).join('')}
 
         <span class="dock-separator" aria-hidden="true"></span>
 
@@ -327,6 +369,22 @@ function shell() {
   closeNotifBtn?.addEventListener('click', () => {
     drawer.classList.remove('is-open')
     drawer.setAttribute('aria-hidden', 'true')
+  })
+
+  drawer?.querySelectorAll('[data-drawer-notification]').forEach((item) => {
+    item.addEventListener('click', () => {
+      markDrawerNotificationRead(item.dataset.drawerNotification)
+      item.classList.add('is-read')
+      item.querySelector('.rsv-drawer-dot')?.remove()
+      if (!renderNotificationFeed(role).unread) root.querySelector('.bar-notif-dot')?.remove()
+    })
+  })
+  drawer?.querySelector('[data-drawer-mark-read]')?.addEventListener('click', () => {
+    markDrawerAllRead(role)
+    drawer.querySelectorAll('.rsv-drawer-item').forEach((item) => item.classList.add('is-read'))
+    drawer.querySelectorAll('.rsv-drawer-dot').forEach((dot) => dot.remove())
+    root.querySelector('.bar-notif-dot')?.remove()
+    toast('All in-app notifications marked read.', 'success')
   })
 
   root.querySelectorAll('[data-panel]').forEach((b) => {
@@ -920,6 +978,7 @@ function settingsPanel() {
 const adminPanels = {
   overview: adminOverview,
   menu: menuPanel,
+  reservations: renderAdminReservationsPanel,
   tables: tablesPanel,
   updates: updatesPanel,
   operations: operationsPanel,
@@ -933,8 +992,7 @@ const adminPanels = {
 function userOverview() {
   const p = getProfile()
   const favorites = getFavorites()
-  const reservations = getUserReservations()
-  const nextRes = reservations[0] || null
+  const nextRes = getNextCustomerReservationView()
   const preferences = getUserPreferences()
   const firstName = p.name ? p.name.split(' ')[0] : 'Guest'
 
@@ -1008,7 +1066,7 @@ function userOverview() {
       <div class="spotlight-visual">
         <img src="/images/restaurant-interior.jpg" alt="Interior Dining Room">
         <div class="spotlight-visual-shade"></div>
-        <span class="spotlight-badge"><i data-lucide="check-circle-2"></i> CONFIRMED SITTING</span>
+        <span class="spotlight-badge"><i data-lucide="check-circle-2"></i> ${escape(String(nextRes.status).toUpperCase())} SITTING</span>
       </div>
       <div class="spotlight-content">
         <span class="card-kicker">YOUR NEXT EVENING WITH US</span>
@@ -1021,7 +1079,7 @@ function userOverview() {
         </div>
         <p class="spotlight-note"><i data-lucide="info"></i> ${escape(nextRes.notes)}</p>
         <div class="spotlight-actions">
-          <a href="/pages/reservations.html" class="ios-action-btn secondary"><span>Modify Booking</span></a>
+          <a href="/pages/reservations.html?manage=${encodeURIComponent(nextRes.id)}" class="ios-action-btn secondary"><span>Modify Booking</span></a>
           <a href="/pages/menu.html" class="ios-action-btn primary"><span>Explore Tonight's Carte</span> <i data-lucide="arrow-up-right"></i></a>
         </div>
       </div>
@@ -1121,44 +1179,7 @@ function favoritesPanel() {
 }
 
 function userActivityPanel() {
-  const reservations = getUserReservations()
-  return `
-  <div class="dash-view-header ios-spring-enter">
-    <div class="view-title-group">
-      <div class="ios-capsule-badge"><i data-lucide="calendar-days"></i> RESERVATIONS &amp; ACTIVITY</div>
-      <h1>Evenings at <em>Flavoro.</em></h1>
-      <p>Review active table bookings, past culinary experiences, and special dining arrangements.</p>
-    </div>
-    <div class="view-header-actions">
-      <a href="/pages/reservations.html" class="ios-action-btn primary"><i data-lucide="plus"></i> <span>Book New Table</span></a>
-    </div>
-  </div>
-
-  <div class="reservations-ledger-grid ios-spring-enter">
-    ${reservations.map(res => `
-      <div class="ios-card res-ledger-card">
-        <div class="res-ledger-head">
-          <div>
-            <span class="res-badge ${res.status.toLowerCase()}">${res.status}</span>
-            <h3>${escape(res.experience)}</h3>
-          </div>
-          <span class="res-id">${res.id}</span>
-        </div>
-        <div class="res-meta-grid">
-          <div><i data-lucide="calendar-days"></i> <strong>${escape(res.date)}</strong></div>
-          <div><i data-lucide="clock"></i> <strong>${escape(res.time)}</strong></div>
-          <div><i data-lucide="users"></i> <strong>${escape(res.guests)} Guests</strong></div>
-          <div><i data-lucide="compass"></i> <strong>${escape(res.zone)}</strong></div>
-        </div>
-        ${res.notes ? `<p class="res-special-note"><i data-lucide="info"></i> ${escape(res.notes)}</p>` : ''}
-        <div class="res-card-foot">
-          <a href="/pages/reservations.html" class="ios-action-btn secondary"><span>Manage Reservation</span></a>
-          <a href="/pages/contact.html" class="res-help-link"><span>Special requests</span> <i data-lucide="arrow-up-right"></i></a>
-        </div>
-      </div>
-    `).join('')}
-  </div>
-  `
+  return renderCustomerReservationsPanel()
 }
 
 function tasteProfilePanel() {
@@ -1426,6 +1447,10 @@ function dishDialog(id) {
    ========================================================================= */
 
 function bind() {
+  // Reservation management panels (admin ledger / customer bookings)
+  bindAdminReservations(root, { show, toast })
+  bindCustomerReservations(root, { show, toast })
+
   // Navigation shortcuts
   root.querySelectorAll('[data-go]').forEach((b) => {
     b.onclick = () => show(b.dataset.go)
@@ -1535,7 +1560,7 @@ function bind() {
 
   // Reset Floor Session
   root.querySelector('#btn-reset-floor')?.addEventListener('click', () => {
-    localStorage.removeItem('flavoro.demo.tables.v1')
+    resetTableCollection()
     show('tables')
     toast('Evening seating session reset to defaults.', 'info')
   })
