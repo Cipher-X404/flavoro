@@ -273,16 +273,16 @@ function home() {
 }
 
 function about() {
+  // Six embers rather than nine. Each one is a separate composited layer
+  // animating for the length of a meal, and the eye reads the drift at three
+  // or four; the rest were frame cost without effect.
   const embers = [
     ['8%', '7px', '13s', '0s', '26px'],
-    ['17%', '4px', '10s', '2.4s', '-18px'],
-    ['26%', '5px', '15s', '5.8s', '34px'],
-    ['39%', '3px', '9s', '1.2s', '-22px'],
-    ['52%', '6px', '14s', '4.1s', '18px'],
-    ['64%', '4px', '11s', '6.3s', '-30px'],
-    ['73%', '7px', '16s', '2.9s', '24px'],
-    ['84%', '3px', '12s', '7.4s', '-16px'],
-    ['92%', '5px', '15s', '4.8s', '20px'],
+    ['22%', '4px', '10s', '2.4s', '-18px'],
+    ['37%', '5px', '15s', '5.8s', '34px'],
+    ['56%', '6px', '14s', '1.2s', '18px'],
+    ['74%', '4px', '11s', '4.1s', '-30px'],
+    ['90%', '7px', '16s', '2.9s', '24px'],
   ]
   const producerRows = [
     {
