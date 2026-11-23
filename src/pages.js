@@ -2170,12 +2170,44 @@ function infoPage(kind) {
 }
 
 function notFound() {
- return `<main id="main-content" class="error-404">
-   <h1 class="sr-only">Page not found</h1>
-   <img class="error-404-art" src="/images/404-chef.jpg" alt="A disappointed cartoon dog chef standing beside a burnt meal">
-   <div class="error-404-code" aria-label="404 error"><strong>404</strong><span>ERROR</span></div>
-   <div class="error-404-bubble"><p>Oooops!<br>Something<br>went wrong</p><a href="/index.html">Back to home <i data-lucide="arrow-right"></i></a></div>
- </main>`
+  // A dead link is still the restaurant's front door, so this is an editorial
+  // "off the menu" page in the same language as the Journal — not a cartoon.
+  const suggestions = [
+    ['The menu', 'What is cooking this week', '/pages/menu.html'],
+    ['Book a table', 'Find a seat in the room', '/pages/reservations.html'],
+    ['The Journal', 'Long-form writing from the house', '/pages/blog.html'],
+    ['Find us', 'The last two hundred metres', '/pages/contact.html'],
+  ]
+  return `${header('')}
+  <main id="main-content" class="nf">
+    <div class="nf-shell">
+      <div class="nf-head">
+        <span class="nf-code" aria-hidden="true">404</span>
+        <p class="nf-kicker">Off the menu</p>
+        <h1 class="nf-title">This page has<br><em>left the room.</em></h1>
+        <p class="nf-note">The link is broken, the dish is off the carte, or the address was mistyped by a hand that had been holding a glass. Nothing here is lost for good — the kitchen is still open.</p>
+        <a class="nf-home" href="/index.html">Back to the dining room <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+
+        <dl class="nf-facts">
+          <div><dt>Open</dt><dd>Wednesday to Sunday<br>from 4:30 PM</dd></div>
+          <div><dt>Find us</dt><dd>${HOUSE.street}<br>${HOUSE.city}</dd></div>
+          <div><dt>Tonight</dt><dd>Seatings from 5:30<br>Bar until late</dd></div>
+        </dl>
+      </div>
+
+      <nav class="nf-doors" aria-label="Where to go next">
+        ${suggestions.map(([name, note, href], index) => `
+        <a class="nf-door" href="${href}">
+          <span class="nf-door-index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+          <span class="nf-door-body">
+            <span class="nf-door-name">${name}</span>
+            <span class="nf-door-note">${note}</span>
+          </span>
+          <span class="nf-door-arrow" aria-hidden="true">↗</span>
+        </a>`).join('')}
+      </nav>
+    </div>
+  </main>${closePage()}`
 }
 
 function auth(type) {

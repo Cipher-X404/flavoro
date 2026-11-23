@@ -15408,3 +15408,161 @@ body[data-page^="journal-"] { background: var(--jn-paper); }
   .rmap-core-pulse { animation: none; opacity: 0; }
   .rmap-road path, .rmap-stop, .rmap-legend-item { transition-duration: 0.01ms !important; }
 }
+
+/* ==========================================================================
+   404 — off the menu
+   --------------------------------------------------------------------------
+   A dead link treated as an editorial page: the house's number, the same
+   hairline rules and ember accent as the Journal, and four real doors out.
+   ========================================================================== */
+.nf {
+  --nf-ink: #100c08;
+  --nf-paper: #f6efe2;
+  --nf-ember: #ef8318;
+  --nf-muted: #6d5b47;
+  --nf-line: rgba(16, 12, 8, 0.14);
+  background: var(--nf-paper);
+  color: var(--nf-ink);
+  padding: clamp(96px, 13vh, 150px) clamp(20px, 5vw, 64px) clamp(64px, 9vh, 110px);
+}
+.nf-shell {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(32px, 6vw, 90px);
+  align-items: start;
+}
+.nf-head { position: relative; }
+.nf-code {
+  display: block;
+  font: 600 clamp(96px, 15vw, 190px)/0.86 var(--serif, 'Cormorant Garamond', Georgia, serif);
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(16, 12, 8, 0.22);
+  margin-bottom: clamp(6px, 1.4vw, 14px);
+}
+.nf-kicker {
+  margin: 0 0 14px;
+  font: 700 9px/1 var(--sans, Manrope, sans-serif);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #a04705;
+}
+.nf-title {
+  margin: 0;
+  font: 600 clamp(34px, 4.6vw, 62px)/0.96 var(--serif, 'Cormorant Garamond', Georgia, serif);
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.nf-title em { font-style: italic; color: #a04705; }
+.nf-note {
+  max-width: 46ch;
+  margin: clamp(18px, 2.6vh, 26px) 0 0;
+  font-size: clamp(14px, 1.15vw, 16.5px);
+  line-height: 1.7;
+  color: var(--nf-muted);
+}
+.nf-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: clamp(22px, 3.4vh, 34px);
+  padding-bottom: 6px;
+  border-bottom: 1px solid #a04705;
+  font: 700 10px/1 var(--sans, Manrope, sans-serif);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a04705;
+  transition: gap 0.3s ease, color 0.3s ease;
+}
+.nf-home:hover { gap: 16px; color: var(--nf-ink); }
+.nf-home svg { width: 14px; height: 14px; }
+.nf-home:focus-visible { outline: 2px solid #a04705; outline-offset: 4px; }
+.nf-doors { border-top: 1px solid var(--nf-line); position: relative; }
+.nf-doors::before {
+  content: 'Where to go instead';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  transform: translateY(-100%);
+  padding-bottom: 10px;
+  font: 700 8.5px/1 var(--sans, Manrope, sans-serif);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(16, 12, 8, 0.42);
+}
+.nf-door {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 4px;
+  border-bottom: 1px solid var(--nf-line);
+  color: inherit;
+  transition: background 0.3s ease, padding-left 0.3s ease;
+}
+.nf-door:hover { background: rgba(239, 131, 24, 0.08); padding-left: 12px; }
+.nf-door:focus-visible { outline: 2px solid #a04705; outline-offset: -2px; }
+.nf-door-index {
+  font: 700 9px/1 var(--sans, Manrope, sans-serif);
+  letter-spacing: 0.14em;
+  color: #a04705;
+}
+.nf-door-body { display: grid; gap: 4px; }
+.nf-door-name {
+  font: 600 clamp(17px, 1.5vw, 21px)/1.15 var(--serif, 'Cormorant Garamond', Georgia, serif);
+  letter-spacing: -0.01em;
+}
+.nf-door-note {
+  font: 500 10.5px/1.35 var(--sans, Manrope, sans-serif);
+  letter-spacing: 0.05em;
+  color: var(--nf-muted);
+}
+.nf-door-arrow { color: #a04705; font-size: 15px; transition: transform 0.3s ease; }
+.nf-door:hover .nf-door-arrow { transform: translate(2px, -2px); }
+
+@media (max-width: 860px) {
+  .nf-shell { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+  .nf-code { -webkit-text-stroke-width: 0.8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nf-home, .nf-door, .nf-door-arrow { transition: none; }
+}
+
+/* The 404 is the only paper-coloured page that uses the shared header. The
+   default header is white type for dark heroes, so it inverts until the
+   scrolled state gives it its own dark background. */
+body[data-page="notFound"] .site-header:not(.is-scrolled) { color: var(--ink, #100c08); }
+body[data-page="notFound"] .site-header:not(.is-scrolled) .nav-link:hover,
+body[data-page="notFound"] .site-header:not(.is-scrolled) .nav-link.is-active { color: #a04705; }
+body[data-page="notFound"] .site-header:not(.is-scrolled) .user-link,
+body[data-page="notFound"] .site-header:not(.is-scrolled) .menu-toggle { border-color: rgba(16, 12, 8, 0.24); color: #100c08; }
+body[data-page="notFound"] .site-header:not(.is-scrolled) .user-link:hover,
+body[data-page="notFound"] .site-header:not(.is-scrolled) .menu-toggle:hover { background: var(--orange); border-color: var(--orange); color: #fff; }
+body[data-page="notFound"] .site-header:not(.is-scrolled) .dropdown { background: #fffaf2; border-color: rgba(16, 12, 8, 0.12); }
+body[data-page="notFound"] .site-header:not(.is-scrolled) .dropdown a { color: #4a3d31; }
+
+/* A handful of real facts anchors the short column against the four doors. */
+.nf-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 18px 24px;
+  margin: clamp(30px, 5vh, 52px) 0 0;
+  padding-top: clamp(20px, 3vh, 28px);
+  border-top: 1px solid var(--nf-line);
+}
+.nf-facts div { display: grid; gap: 7px; }
+.nf-facts dt {
+  font: 700 8px/1 var(--sans, Manrope, sans-serif);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(16, 12, 8, 0.42);
+}
+.nf-facts dd {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #4a3d31;
+}
+.nf-facts b { font-weight: 700; color: var(--nf-ink); }

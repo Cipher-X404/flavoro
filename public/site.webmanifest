@@ -1,0 +1,20 @@
+{
+  "name": "Flavoro — Hearth Restaurant",
+  "short_name": "Flavoro",
+  "description": "Live-oak fire, California growers and a dining room built for gathering in Hayes Valley, San Francisco.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#12100e",
+  "theme_color": "#12100e",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Book a table", "url": "/pages/reservations.html" },
+    { "name": "The menu", "url": "/pages/menu.html" },
+    { "name": "The Journal", "url": "/pages/blog.html" }
+  ]
+}

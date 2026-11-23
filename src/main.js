@@ -13,6 +13,8 @@ import { applyLocalSettings, showLocalUpdate } from './site-updates.js'
 import { initEndlessCorridor } from './components/ui/endless.js'
 import { initTeamLanyardRail } from './components/ui/team-lanyard-rail.js'
 import { initRoadMapGallery } from './components/ui/road-map-gallery.js'
+import { articleSchema, breadcrumbSchema, restaurantSchema } from './components/site-meta.js'
+import { getOpeningHours } from './data/contact.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -25,6 +27,74 @@ let teardownHomeHero
 let teardownContact
 let teardownMaps
 let teardownJournal
+
+/**
+ * Structured data is injected at runtime rather than pasted into thirty
+ * hand-written <head> blocks, so the address, the hours and the canonical URL
+ * exist in exactly one place. Crawlers that execute JavaScript — which the
+ * major ones now do — read this; the static og: tags cover the rest.
+ */
+function injectStructuredData(page, resolvedPage) {
+  const scripts = []
+  const crumbs = [{ name: 'Home', url: '/' }]
+
+  if (page !== 'home' && page !== 'dispatch' && !page.startsWith('journal-')) {
+    const label = (document.title.split('—')[0] || '').trim() || page
+    crumbs.push({ name: label, url: location.pathname })
+  }
+
+  // The restaurant entity belongs on the pages a guest might land on first.
+  if (['home', 'about', 'contact', 'visit', 'menu', 'reservations'].includes(page)) {
+    scripts.push(restaurantSchema({ hours: getOpeningHours(), url: location.pathname }))
+  }
+
+  // Journal pages get an Article on top of the restaurant, so a shared
+  // dispatch renders as a real article rather than a generic page.
+  const isJournal = page === 'dispatch' || page.startsWith('journal-')
+  if (isJournal) {
+    const title = document.querySelector('.art-title')?.textContent?.trim()
+    const standfirst = document.querySelector('.art-standfirst')?.textContent?.trim()
+    const image = document.querySelector('.art-hero img')?.getAttribute('src') || document.querySelector('.art-cover img')?.getAttribute('src')
+    const author =
+      document.querySelector('.art-author-name')?.textContent?.trim() ||
+      document.querySelector('.art-byline a, .art-byline span')?.textContent?.trim()
+    if (title) {
+      // A published date is optional on a dispatch; an invalid one would throw
+      // before any structured data is written.
+      const filed = document.querySelector('.art-facts')?.textContent || ''
+      const match = filed.match(/([A-Z][a-z]+ \d{1,2}, \d{4})/)
+      const parsed = match ? new Date(match[1]) : null
+      const datePublished = parsed && !Number.isNaN(parsed.getTime()) ? parsed.toISOString() : undefined
+
+      scripts.push(articleSchema({
+        title,
+        description: standfirst || document.querySelector('meta[name="description"]')?.content || '',
+        image: image && image.startsWith('/') ? image : undefined,
+        url: location.pathname + location.search,
+        datePublished,
+        author,
+        section: document.querySelector('.art-kicker')?.textContent?.trim(),
+      }))
+      crumbs.push({ name: title, url: location.pathname + location.search })
+      crumbs.splice(1, 0, { name: 'Journal', url: '/pages/blog.html' })
+    }
+  }
+
+  if (crumbs.length > 1) scripts.push(breadcrumbSchema(crumbs))
+
+  // Re-rendering the same page must not stack duplicates, so clear first —
+  // clearing inside the loop would delete the node just appended.
+  document.head.querySelectorAll('script[data-generated="site-meta"]').forEach((old) => old.remove())
+
+  for (const script of scripts) {
+    const holder = document.createElement('div')
+    holder.innerHTML = script.trim()
+    const node = holder.firstElementChild
+    if (!node || node.tagName !== 'SCRIPT') continue
+    node.dataset.generated = 'site-meta'
+    document.head.appendChild(node)
+  }
+}
 
 function initialize() {
   const page = document.body.dataset.page || 'home'
@@ -39,6 +109,7 @@ function initialize() {
   }
   const resolvedPage = page === 'dispatch' ? `journal-${requestedSlug || ''}` : page
   document.querySelector('#app').innerHTML = renderPage(resolvedPage)
+  injectStructuredData(page, resolvedPage)
   if (page === 'home') applyLocalSettings()
   document.querySelectorAll('img:not(.hero-bg):not(.page-hero-bg):not([data-eager])').forEach(image => {
     image.loading = 'lazy'

@@ -70,6 +70,27 @@ export function windowsFor(day) {
   return WINDOWS[day] || []
 }
 
+const SCHEMA_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+/**
+ * Opening hours in schema.org shape, derived from the same WINDOWS the
+ * reservations engine reads — so a rich result can never drift from the
+ * booking widget. Minutes are converted to 24-hour `HH:MM`.
+ */
+export function getOpeningHours() {
+  const hhmm = (minutes) => {
+    const wrapped = ((Math.round(minutes) % 1440) + 1440) % 1440
+    return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`
+  }
+  return SCHEMA_DAYS.flatMap((name, day) =>
+    windowsFor(day).map((window) => ({
+      days: [name],
+      opens: hhmm(window.open),
+      closes: hhmm(window.close),
+    })),
+  )
+}
+
 export function isServiceDay(day) {
   return windowsFor(day).length > 0
 }
