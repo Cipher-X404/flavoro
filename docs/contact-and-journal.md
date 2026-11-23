@@ -2,9 +2,9 @@
 
 Two pages were rebuilt around a single idea: **a restaurant website should behave
 like the restaurant, not like a form.** The contact page is an arrival. The
-journal is a bookcase. Both keep the house style — Cormorant display type,
-paper and ink surfaces, one ember accent, hairlines instead of boxes — and both
-ship a plain, working fallback underneath the theatre.
+journal is an issue of a magazine. Both keep the house style — Cormorant display
+type, paper and ink surfaces, one ember accent, hairlines instead of boxes — and
+both ship a plain, working fallback underneath the theatre.
 
 Nothing here talks to a network. Inquiries and letter subscriptions are stored in
 the browser, exactly like reservations (see `docs/reservations.md`).
@@ -90,48 +90,69 @@ saveInquiry({ name, email, phone, message, topic, partySize, date, window })
 
 ---
 
-## 2. Journal — “The Reading Room”
+## 2. Journal — “The Issue”
 
 ### Why this shape
 
-`DESIGN-apple.md` describes a photography-first index: full-bleed tiles,
-alternating light and dark canvases, display type with negative tracking, one
-accent, one shadow reserved for the artifact. That discipline is respected
-exactly — and then one idea Apple would never ship is bolted onto it: **the index
-is a bookcase.**
+The journal is an **issue**, not a card grid. The reading experience is built
+like a printed magazine:
 
 | # | Section | Class | What it does |
 | --- | --- | --- | --- |
-| — | Cover | `.jr-hero` | Full-bleed photograph, the issue line, dispatch/minutes/date |
-| 01 | The reading room | `.jr-room` | Eight cloth spines on a shelf; the book above opens to one |
-| 02 | The whole issue | `.jr-index` | Chronological list of every dispatch, no interaction required |
-| 03 | The letter | `.jr-letter` | One working signup, and a quiet way back to the tables |
+| — | Cover | `.jrn-cover` | The newest dispatch gets a whole page: full-bleed photograph, title, dek, byline, issue statistics |
+| 01 | The issue, in full | `.jrn-index` | A printed contents page — every dispatch as a numbered row with its photograph, one-line summary and extent |
+| 02 | Read by subject | `.jrn-strands` | The same eight pieces grouped into four running strands, one open at a time |
+| 03 | The desk | `.jrn-desk` | How a dispatch is written, and a way to send one in |
+| 04 | The letter | `.jrn-letter` | One working signup, and a quiet way back to the tables |
 
-### The shelf
+Every dispatch page (`.art`) then reads as a feature:
 
-- Spines are grouped by section (Hearth & Technique, Hospitality & Rituals,
-  Terroir & Producers, Living Cellar) and numbered within it, the way a shelf
-  actually is. The legend under the shelf names the four cloth colours.
-- The books are `role="tab"` buttons with roving `tabindex`; the spread is the
-  `tabpanel`. Left/Right/Up/Down step through them, Home/End jump to the ends,
-  and the spread itself is focusable so the arrows work from there too.
-- Selecting a spine turns the page: the photograph cross-fades, the right page
-  wipes open from the gutter with GSAP, and the text settles in behind it.
-  Reduced-motion users get an instant swap.
-- The shelf scrolls horizontally on narrow screens and only auto-scrolls when
-  the chosen book is actually out of view.
+| Part | Class | What it does |
+| --- | --- | --- |
+| The arrival | `.art-hero` | Photograph, category, title, standfirst, and four facts — author, date, reading time, chapters |
+| The rail | `.art-rail` | Sticky contents that tracks where the reader is, copy-link, all dispatches |
+| The scene | `.art-opening` | A drop-cap lead paragraph and the opening movement |
+| The figures | `.art-figure` | Two body photographs per dispatch, each with a caption that names what is in frame |
+| The chapters | `.art-chapter` | Five or six subheaded chapters, each with its own argument |
+| The quote | `.art-quote` | One pull quote, set as a torn-out line |
+| The takeaway | `.art-takeaway` | The practical half of a feature: 4–6 facts a reader can act on |
+| The author | `.art-author` | Who wrote it and why they are qualified to |
+| Next | `.art-next` + `.art-more` | The next dispatch in the issue, then three more |
+
+### Interaction
+
+- **Filtering** — the four strand buttons filter the contents rows. The rows
+  animate in with a short GSAP stagger; with reduced motion they simply appear.
+- **Strands** — an accordion that opens one strand at a time. It works as a
+  plain disclosure list with JavaScript, and as a fully open list without it.
+- **Contents tracking** — an `IntersectionObserver` marks the chapter the
+  reader is currently in, with an `aria-current` for assistive technology.
+- **Copy link** — writes the current URL to the clipboard and reports success
+  in place; no third-party share widget.
 
 ### One source of truth for the writing
 
-Article copy stays in `articles` in `src/pages.js`. `journalIssue()` derives the
-index from it (title, category, volume, reading time, image, caption) and
-`journalShelf()` re-orders it by section. The page serialises the shelf into a
-`<script type="application/json" class="jr-issue-data">` block, which
-`src/journal-page.js` reads — no duplicated article metadata in JS, and no
-second bundle of page templates.
+The writing lives in **`src/data/journal.js`**: eight full features — 9,000
+words between them, 1,000–1,400 per dispatch — each with a title, standfirst,
+dek, opening paragraphs, five or six chapters, a pull quote, a reading-time
+sidebar and a close note. `journalIssue()` in `src/pages.js` derives everything
+the index and the dispatch pages need — the category, the volume, the extent,
+the word count, the chapter count, and the reading time, which is computed
+from the copy at 200 words a minute rather than declared by hand.
 
-Adding a dispatch: write the article in `articles`, add its slug to
-`JOURNAL_ORDER`, and the shelf, legend, counters and index all follow.
+Photographs are held to the same rule as the captions. `DISPATCH_PHOTOS` pairs
+each image with a caption describing what is actually in the frame, and
+`DISPATCH_FIGURES` names the two body photographs each dispatch uses, so no
+page repeats its own hero and no picture sits under a caption about something
+else.
+
+The index serialises the issue into a
+`<script type="application/json" class="jr-issue-data">` block, so
+`src/journal-page.js` never duplicates article metadata.
+
+Adding a dispatch: write it in `src/data/journal.js`, add its slug to
+`JOURNAL_ORDER`, and the cover, the contents, the strands, the counters and the
+"next dispatch" links all follow.
 
 ### The letter
 
@@ -149,8 +170,9 @@ list” in place. No network call, no fake `onsubmit` handler.
 | Inquiries + dispatch subscriptions | `src/data/inquiries.js` |
 | Contact behaviour | `src/contact-page.js` |
 | Journal behaviour | `src/journal-page.js` |
-| Markup | `src/pages.js` (`contact()`, `blog()`, `journalIssue()`) |
-| Styles | `src/style.css` — sections “CONTACT — The Front Door” and “JOURNAL — The Reading Room” |
+| Journal writing | `src/data/journal.js` — eight dispatches (~9,000 words), order and strands |
+| Markup | `src/pages.js` (`contact()`, `blog()`, `journalArticle()`, `journalIssue()`) |
+| Styles | `src/style.css` — sections “CONTACT — The Front Door”, “JOURNAL — The Dispatch” and “DISPATCH — the article page” |
 
 `src/editorial-features.js` no longer owns either page: it keeps the shared
 Apple-style reveal choreography for About and the concierge desk. The old

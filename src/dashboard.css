@@ -2503,3 +2503,317 @@ svg {
     transition: none !important;
   }
 }
+
+/* ==========================================================================
+   Journal Studio
+   --------------------------------------------------------------------------
+   The admin side of the blog: a drawer of published pieces and drafts, then a
+   two-column editor with the photograph and publish controls pinned right.
+   ========================================================================== */
+.jrn-studio-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.jrn-stat {
+  padding: 16px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.jrn-stat span {
+  display: block;
+  font: 400 26px/1 var(--serif);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.jrn-stat b {
+  display: block;
+  margin-top: 7px;
+  font: 600 9.5px/1 var(--sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.jrn-studio-block { margin-bottom: 28px; }
+.jrn-studio-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.jrn-studio-block-head h2 {
+  margin: 0;
+  font: 600 13px/1 var(--sans);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.jrn-studio-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 10px/1 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--orange);
+  text-decoration: none;
+}
+.jrn-studio-link svg { width: 13px; height: 13px; }
+.jrn-studio-link:hover { color: var(--orange-light); }
+.jrn-studio-hint {
+  font: 500 10.5px/1 var(--sans);
+  color: var(--text-tertiary);
+  letter-spacing: 0.03em;
+}
+.jrn-studio-empty {
+  margin: 16px 0 0;
+  padding: 18px 20px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-tertiary);
+}
+
+.jrn-studio-list { display: grid; }
+.jrn-studio-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.25s ease;
+}
+.jrn-studio-row:hover { background: rgba(255, 255, 255, 0.02); }
+.jrn-studio-thumb {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-tertiary);
+}
+.jrn-studio-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.jrn-studio-thumb svg { width: 17px; height: 17px; }
+.jrn-studio-body { display: grid; gap: 3px; min-width: 0; }
+.jrn-studio-strand {
+  font: 700 8px/1 var(--sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.jrn-studio-title {
+  font: 400 16px/1.25 var(--serif);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jrn-studio-meta {
+  font: 500 10.5px/1.3 var(--sans);
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+.jrn-studio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.ios-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font: 600 10px/1 var(--sans);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.22s var(--smooth-easing);
+}
+.ios-chip-btn svg { width: 12px; height: 12px; }
+.ios-chip-btn:hover {
+  border-color: var(--border-highlight);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-1px);
+}
+.ios-chip-btn.accent { border-color: var(--border-active); color: var(--orange-light); background: var(--orange-glow); }
+.ios-chip-btn.accent:hover { background: rgba(248, 138, 8, 0.32); }
+.ios-chip-btn.danger { color: #ff8d7a; }
+.ios-chip-btn.danger:hover { border-color: rgba(255, 90, 60, 0.5); background: rgba(255, 90, 60, 0.14); }
+
+/* --- editor ------------------------------------------------------------- */
+.jrn-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr);
+  gap: 18px;
+  align-items: start;
+}
+.jrn-editor-main, .jrn-editor-side { display: grid; gap: 16px; min-width: 0; }
+.jrn-editor-side { position: sticky; top: 92px; }
+.jrn-editor-card { padding: 20px 22px 22px; }
+.jrn-editor-card > .ios-label:last-child { margin-bottom: 0; }
+.jrn-editor-card .ios-label { display: grid; gap: 7px; margin-bottom: 15px; }
+/* Native selects inherit the OS light palette; these need the dashboard's. */
+.jrn-editor-card select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--sans);
+  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.32);
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%),
+    linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+  background-position: calc(100% - 17px) calc(50% + 1px), calc(100% - 12px) calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+.jrn-editor-card select option { background: #171310; color: var(--text-primary); }
+.jrn-editor-card textarea { font-family: var(--sans); }
+.jrn-editor-card input::placeholder,
+.jrn-editor-card textarea::placeholder { color: rgba(163, 152, 139, 0.5); }
+.jrn-editor-card textarea { resize: vertical; min-height: 66px; line-height: 1.6; }
+.jrn-field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.jrn-hint {
+  font: 500 10.5px/1.5 var(--sans);
+  color: var(--text-tertiary);
+  letter-spacing: 0.01em;
+}
+.jrn-hint--block { margin: 0 0 14px; }
+.jrn-hint:not(.jrn-hint--block) { text-transform: none; letter-spacing: 0.01em; font-weight: 500; }
+.jrn-editor-card label > .jrn-hint { display: inline; }
+
+.jrn-chapter {
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 14px 15px 13px;
+  margin: 0 0 12px;
+  display: grid;
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.jrn-chapter legend {
+  padding: 0 6px;
+  font: 700 8.5px/1 var(--sans);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+.jrn-chapter input,
+.jrn-chapter textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text-primary);
+  font: 500 12.5px/1.5 var(--sans);
+}
+.jrn-chapter input:focus,
+.jrn-chapter textarea:focus {
+  outline: none;
+  border-color: var(--border-active);
+  background: rgba(0, 0, 0, 0.4);
+}
+.jrn-chapter .ios-chip-btn { justify-self: start; }
+
+.jrn-fact {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr) auto;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.jrn-fact input {
+  padding: 9px 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text-primary);
+  font: 500 12px/1 var(--sans);
+  min-width: 0;
+}
+.jrn-fact input:focus { outline: none; border-color: var(--border-active); }
+.jrn-fact .ios-chip-btn { padding: 8px; border-radius: 9px; }
+
+/* --- photograph --------------------------------------------------------- */
+.jrn-drop {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  border: 1px dashed var(--border-highlight);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 11px;
+  background: rgba(0, 0, 0, 0.24);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+.jrn-drop:hover, .jrn-drop.is-over { border-color: var(--orange); background: var(--orange-glow); }
+.jrn-drop img { width: 100%; height: 100%; object-fit: cover; }
+.jrn-drop-empty { display: grid; gap: 7px; justify-items: center; padding: 18px; text-align: center; }
+.jrn-drop-empty svg { width: 22px; height: 22px; color: var(--text-tertiary); }
+.jrn-drop-empty b { font: 600 11.5px/1 var(--sans); color: var(--text-secondary); letter-spacing: 0.02em; }
+.jrn-drop-empty span { font: 500 10px/1.4 var(--sans); color: var(--text-tertiary); }
+
+/* --- publish ------------------------------------------------------------ */
+.jrn-publish-card { display: grid; gap: 10px; }
+.jrn-publish-state {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  font: 600 10.5px/1.3 var(--sans);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+}
+.jrn-publish-state svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.jrn-publish-state.is-live { border-color: rgba(52, 199, 89, 0.4); background: var(--green-glow); color: #8fe3a6; }
+.jrn-editor-status {
+  margin-top: 14px;
+  font: 500 12px/1.6 var(--sans);
+  color: #ffb1a3;
+}
+.jrn-editor-status ul { margin: 0; padding-left: 18px; }
+
+.view-header-actions .ios-action-btn.ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+.view-header-actions .ios-action-btn.ghost svg { transform: rotate(180deg); }
+
+@media (max-width: 1100px) {
+  .jrn-editor { grid-template-columns: minmax(0, 1fr); }
+  .jrn-editor-side { position: static; }
+}
+@media (max-width: 720px) {
+  .jrn-studio-row { grid-template-columns: 56px minmax(0, 1fr); }
+  .jrn-studio-thumb { width: 56px; height: 40px; }
+  .jrn-studio-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .jrn-field-pair { grid-template-columns: minmax(0, 1fr); }
+  .jrn-fact { grid-template-columns: minmax(0, 1fr) auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jrn-studio-row, .ios-chip-btn, .jrn-drop { transition: none; }
+}

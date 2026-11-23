@@ -48,6 +48,7 @@ import {
   ChevronDown,
   Ban,
   RotateCcw,
+  Copy,
 } from 'lucide'
 import { isSignedIn, logout } from './local-auth.js'
 import {
@@ -81,6 +82,8 @@ import {
   renderNotificationFeed,
 } from './dashboard-reservations.js'
 import { resetCollection } from './data/store.js'
+import { bindJournalStudio, journalStudioPanel, resetJournalStudio } from './dashboard-journal.js'
+import { getPublishedPosts } from './data/journal-store.js'
 
 const resetTableCollection = () => resetCollection('tables')
 
@@ -131,6 +134,7 @@ const icons = {
   ChevronDown,
   Ban,
   RotateCcw,
+  Copy,
 }
 
 const admin = document.body.dataset.dashboard === 'admin'
@@ -151,6 +155,7 @@ const adminNav = [
   ['menu', 'utensils-crossed', 'Menu Studio', 'Live'],
   ['reservations', 'clipboard-list', 'Reservations', ''],
   ['tables', 'calendar-days', 'Floor & Tables', ''],
+  ['journal', 'book-open', 'Journal Studio', 'New'],
   ['updates', 'megaphone', 'Announcements', ''],
   ['operations', 'activity', 'Operations', 'Active'],
   ['settings', 'sliders-horizontal', 'Settings', ''],
@@ -975,11 +980,21 @@ function settingsPanel() {
   `
 }
 
+/* The studio lives in its own module; this adapter supplies the dashboard's
+   shared helpers and the slugs the shipped issue already owns. */
+function journalPanel() {
+  return journalStudioPanel({
+    escape,
+    publishedSlugs: getPublishedPosts().map((post) => post.slug).filter(Boolean),
+  })
+}
+
 const adminPanels = {
   overview: adminOverview,
   menu: menuPanel,
   reservations: renderAdminReservationsPanel,
   tables: tablesPanel,
+  journal: journalPanel,
   updates: updatesPanel,
   operations: operationsPanel,
   settings: settingsPanel,
@@ -1459,6 +1474,9 @@ function bind() {
   // Quick Dish modal
   root.querySelector('#btn-quick-dish')?.addEventListener('click', () => dishDialog())
   root.querySelector('#add-dish')?.addEventListener('click', () => dishDialog())
+
+  // Journal Studio
+  if (current === 'journal') bindJournalStudio(root, { escape, toast, show })
   root.querySelectorAll('[data-edit]').forEach((b) => (b.onclick = () => dishDialog(b.dataset.edit)))
 
   // Delete dish
@@ -1700,4 +1718,5 @@ function bind() {
 }
 
 // Initial render
+resetJournalStudio()
 show('overview')

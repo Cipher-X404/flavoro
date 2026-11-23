@@ -1,5 +1,8 @@
 import { closePage, dishCard, footer, header, pageHero, sectionHead } from './components/site.js'
+import { articles, JOURNAL_ORDER, JOURNAL_SECTIONS } from './data/journal.js'
+import { getPublishedPosts } from './data/journal-store.js'
 import { renderEndlessSection } from './components/ui/endless.js'
+import { renderRoadMapGallery } from './components/ui/road-map-gallery.js'
 import { renderTeamLanyardRail } from './components/ui/team-lanyard-rail.js'
 
 import {
@@ -44,7 +47,6 @@ const spiceRain = () =>
 
 const img = {
   hero: '/images/hero-pasta.jpg',
-  heroVideo: '/video/flavo.mp4',
   interior: '/images/restaurant-interior.jpg',
   chefs: '/images/chef-team.jpg',
   dessert: '/images/dessert.jpg',
@@ -88,8 +90,9 @@ function home() {
 
   <!-- 01 · THE HEARTH — film, no frame -->
   <section class="hm-scene hm-scene--hero hm-hero home-hero" id="hm-hearth" aria-labelledby="hm-hero-title" data-hm-open="${hero.open ? 'open' : 'closed'}">
-    <video class="hero-bg" loop muted playsinline webkit-playsinline preload="metadata" poster="${img.hero}">
-      <source src="${img.heroVideo}" type="video/mp4">
+    <video class="hero-bg" loop muted playsinline webkit-playsinline preload="none" poster="/images/hero-film-poster.jpg" data-hero-video>
+      <source src="/video/flavo-854.mp4" type="video/mp4" media="(max-width: 760px)">
+      <source src="/video/flavo-1280.mp4" type="video/mp4">
     </video>
     <span class="hm-hero-scrim" aria-hidden="true"></span>
     <span class="hm-hero-grain" aria-hidden="true"></span>
@@ -270,16 +273,16 @@ function home() {
 }
 
 function about() {
+  // Six embers rather than nine. Each one is a separate composited layer
+  // animating for the length of a meal, and the eye reads the drift at three
+  // or four; the rest were frame cost without effect.
   const embers = [
     ['8%', '7px', '13s', '0s', '26px'],
-    ['17%', '4px', '10s', '2.4s', '-18px'],
-    ['26%', '5px', '15s', '5.8s', '34px'],
-    ['39%', '3px', '9s', '1.2s', '-22px'],
-    ['52%', '6px', '14s', '4.1s', '18px'],
-    ['64%', '4px', '11s', '6.3s', '-30px'],
-    ['73%', '7px', '16s', '2.9s', '24px'],
-    ['84%', '3px', '12s', '7.4s', '-16px'],
-    ['92%', '5px', '15s', '4.8s', '20px'],
+    ['22%', '4px', '10s', '2.4s', '-18px'],
+    ['37%', '5px', '15s', '5.8s', '34px'],
+    ['56%', '6px', '14s', '1.2s', '18px'],
+    ['74%', '4px', '11s', '4.1s', '-30px'],
+    ['90%', '7px', '16s', '2.9s', '24px'],
   ]
   const producerRows = [
     {
@@ -990,146 +993,198 @@ function blog() {
   const issue = journalIssue()
   const shelf = journalShelf(issue)
   const sections = [...new Map(shelf.map((post) => [post.sectionKey, post.category])).entries()]
-  const first = shelf[0]
-  const minutes = issue.reduce((total, post) => total + post.minutes, 0)
-  return `
-  <!-- The issue cover -->
-  <section class="jr-hero" aria-labelledby="jr-title">
-    <div class="jr-hero-media" aria-hidden="true">
-      <img src="${img.chefs}" alt="" data-jr-drift>
-    </div>
-    <div class="jr-hero-inner">
-      <p class="jr-kicker">
-        <span>The Flavoro Journal</span>
-        <span class="jr-kicker-sep" aria-hidden="true">·</span>
-        <span>Volumes I – VIII</span>
-        <span class="jr-kicker-sep" aria-hidden="true">·</span>
-        <span>Filed from Hayes Valley</span>
-      </p>
-      <h1 class="jr-title" id="jr-title">Notes from<br><em>around the hearth.</em></h1>
-      <div class="jr-hero-foot">
-        <p class="jr-hero-note">Longform dispatches from the kitchen, the cellar and the dining room. No listicles, no recipes you will never cook — just the long way round a subject, written by the people who were there.</p>
-        <dl class="jr-stats">
-          <div><dt>Dispatches</dt><dd>08</dd></div>
-          <div><dt>Reading</dt><dd>${minutes}<small>min</small></dd></div>
-          <div><dt>Last filed</dt><dd>Oct 2026</dd></div>
-        </dl>
-      </div>
-    </div>
-  </section>
+  const lead = issue[0]
+  const rest = issue.slice(1)
+  const totalMinutes = issue.reduce((total, post) => total + post.minutes, 0)
+  const totalWords = issue.reduce((total, post) => total + post.words, 0)
+  const latest = issue[0]?.date || 'October 2026'
 
-  <!-- 01 · the reading room: a shelf you browse, a book that opens -->
-  <section class="jr-room" aria-labelledby="jr-room-title">
-    <div class="jr-shell">
-      <header class="jr-room-head">
-        <h2 class="jr-room-title" id="jr-room-title"><span class="jr-num" aria-hidden="true">01</span> The reading room</h2>
-        <p class="jr-room-hint" data-jr-hint>Pick a spine. The book opens above it.</p>
-      </header>
+  /* One row of the index: the volume, the writing, the extent. Everything is
+     in the link, so a screen reader reads a whole dispatch as one name. */
+  const shelfRow = (post, index) => `
+    <li class="jrn-row" data-jrn-row>
+      <a class="jrn-row-link" href="${post.url}">
+        <span class="jrn-row-vol" aria-hidden="true">${post.volume}</span>
+        <span class="jrn-row-main">
+          <span class="jrn-row-cat">${post.category}</span>
+          <span class="jrn-row-title">${post.title}</span>
+          <span class="jrn-row-dek">${post.subtitle}</span>
+        </span>
+        <span class="jrn-row-figure" aria-hidden="true"><img src="${post.image}" alt="" loading="lazy" decoding="async"></span>
+        <span class="jrn-row-meta">
+          <span class="jrn-row-date">${post.date}</span>
+          <span class="jrn-row-extent">${post.chapters} chapters · ${post.readTime.replace(' read', '')}</span>
+        </span>
+        <span class="jrn-row-arrow" aria-hidden="true">↗</span>
+      </a>
+    </li>`
 
-      <div class="jr-book" data-jr-book>
-        <div class="jr-spread" id="jr-spread" role="tabpanel" tabindex="0" aria-labelledby="jr-spine-0">
-          <figure class="jr-page jr-page--left">
-            <div class="jr-page-media">
-              <img data-jr="image" src="${first.image}" alt="${first.caption}">
-            </div>
-            <figcaption class="jr-page-caption">
-              <span data-jr="volume">Volume ${first.volume}</span>
-              <span data-jr="caption">${first.caption}</span>
-            </figcaption>
-          </figure>
-
-          <article class="jr-page jr-page--right">
-            <p class="jr-cat"><span data-jr="category">${first.category}</span><span class="jr-cat-dot" aria-hidden="true">·</span><span data-jr="date">${first.date}</span></p>
-            <h3 class="jr-post-title" data-jr="title">${first.title}</h3>
-            <p class="jr-sub" data-jr="subtitle">${first.subtitle}</p>
-            <div class="jr-byline">
-              <span class="jr-byline-name" data-jr="author">${first.author}</span>
-              <span class="jr-byline-role" data-jr="role">${first.role}</span>
-              <span class="jr-byline-time" data-jr="time">${first.readTime}</span>
-            </div>
-            <a class="jr-read" data-jr="link" href="${first.url}">
-              <span>Read the dispatch</span>
-              <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+  /* The reading list: four strands, each with a working filter button. */
+  const readingList = sections.map(([key, label], sectionIndex) => {
+    const items = shelf.filter((post) => post.sectionKey === key)
+    return `
+      <article class="jrn-strand" data-jrn-strand="${key}" data-jrn-open="${sectionIndex === 0 ? 'true' : 'false'}">
+        <header class="jrn-strand-head">
+          <button class="jrn-strand-toggle" type="button" data-jrn-strand-toggle aria-expanded="${sectionIndex === 0 ? 'true' : 'false'}">
+            <span class="jrn-strand-rule" aria-hidden="true"></span>
+            <span class="jrn-strand-label">${label}</span>
+            <span class="jrn-strand-count">${String(items.length).padStart(2, '0')} dispatches</span>
+            <span class="jrn-strand-sign" aria-hidden="true">+</span>
+          </button>
+        </header>
+        <ol class="jrn-strand-list">
+          ${items.map((post) => `
+          <li>
+            <a class="jrn-strand-item" href="${post.url}">
+              <span class="jrn-strand-thumb"><img src="${post.image}" alt="" loading="lazy" decoding="async"></span>
+              <span class="jrn-strand-copy">
+                <span class="jrn-strand-title">${post.title}</span>
+                <span class="jrn-strand-sub">${post.subtitle}</span>
+              </span>
+              <span class="jrn-strand-time">${post.minutes}<small>min</small></span>
             </a>
-          </article>
-        </div>
+          </li>`).join('')}
+        </ol>
+      </article>`
+  }).join('')
 
-        <div class="jr-shelf" data-jr-shelf>
-          <div class="jr-shelf-track" role="tablist" aria-label="Journal dispatches">
-          ${shelf.map((post, index) => `
-          <button class="jr-spine" type="button" role="tab" id="jr-spine-${index}" data-jr-section="${post.sectionKey}"
-            aria-controls="jr-spread" aria-selected="${index === 0 ? 'true' : 'false'}"
-            tabindex="${index === 0 ? '0' : '-1'}" data-jr-index="${index}"
-            style="--jr-h:${[262, 292, 244, 280, 254, 300, 248, 272][index % 8]}px;--jr-w:${[68, 78, 64, 74, 66, 84, 62, 72][index % 8]}px">
-            <span class="jr-spine-vol" aria-hidden="true">${post.volume}</span>
-            <span class="jr-spine-title">${post.short}</span>
-            <span class="jr-spine-cat">${post.categoryRaw.toLowerCase()}</span>
-          </button>`).join('')}
+  return `${header('Blog')}
+  <main id="main-content" class="jrn">
+    <!-- The cover: the newest dispatch, given a full page -->
+    <section class="jrn-cover" aria-labelledby="jrn-title">
+      <div class="jrn-cover-media" aria-hidden="true">
+        <img src="${lead.image}" alt="" data-jrn-drift>
+      </div>
+      <div class="jrn-cover-inner">
+        <p class="jrn-cover-kicker">
+          <span>The Flavoro Journal</span>
+          <span class="jrn-dot" aria-hidden="true">·</span>
+          <span>Issue ${String(issue.length).padStart(2, '0')}</span>
+          <span class="jrn-dot" aria-hidden="true">·</span>
+          <span>Filed from Hayes Valley</span>
+        </p>
+
+        <div class="jrn-cover-grid">
+          <div class="jrn-cover-lead">
+            <p class="jrn-cover-eyebrow">
+              <span class="jrn-cover-flag">New</span>
+              ${lead.category}${lead.volume ? ` <span class="jrn-dot" aria-hidden="true">·</span> Volume ${lead.volume}` : ''}
+            </p>
+            <h1 class="jrn-cover-title" id="jrn-title">${lead.title}</h1>
+            ${(lead.dek || lead.subtitle || lead.standfirst) ? `<p class="jrn-cover-dek">${lead.dek || lead.subtitle || lead.standfirst}</p>` : ''}
+            <div class="jrn-cover-foot">
+              <a class="jrn-cover-cta" href="${lead.url}">
+                <span>Read the dispatch</span>
+                <span class="jrn-cover-cta-ico" aria-hidden="true">↗</span>
+              </a>
+              <p class="jrn-cover-byline">
+                <span>${lead.author || 'The Flavoro Journal'}</span>
+                ${lead.role ? `<span>${lead.role}</span>` : ''}
+                <span>${lead.date}</span>
+                <span>${lead.readTime}</span>
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div class="jr-shelf-meta">
-          <p class="jr-shelf-hint" aria-hidden="true">
-            <span class="jr-key">←</span><span class="jr-key">→</span> to browse, <span class="jr-key">↵</span> to read
-          </p>
-          <ul class="jr-legend" aria-label="Shelf sections">
-            ${sections.map(([key, label]) => `<li data-jr-section="${key}"><i aria-hidden="true"></i>${label}</li>`).join('')}
-          </ul>
+          <aside class="jrn-cover-aside" aria-label="About this issue">
+            <p class="jrn-cover-note">${wordCount(issue.length)} long-form dispatches from the kitchen, the cellar and the dining room. No listicles, no recipes you will never cook — just the long way round a subject, written by the people who were there.</p>
+            <dl class="jrn-cover-stats">
+              <div><dt>Dispatches</dt><dd>${String(issue.length).padStart(2, '0')}</dd></div>
+              <div><dt>Reading</dt><dd>${totalMinutes}<small>min</small></dd></div>
+              <div><dt>Writing</dt><dd>${(totalWords / 1000).toFixed(1)}<small>k words</small></dd></div>
+              <div><dt>Last filed</dt><dd>${latest.replace(/,\s*\d{4}$/, '')}</dd></div>
+            </dl>
+          </aside>
         </div>
       </div>
-    </div>
-  </section>
+      ${lead.caption ? `<p class="jrn-cover-caption">${lead.caption}</p>` : ''}
+    </section>
 
-  <!-- 02 · the whole issue, as an index -->
-  <section class="jr-index" aria-labelledby="jr-index-title">
-    <div class="jr-shell">
-      <header class="jr-index-head">
-        <h2 class="jr-room-title" id="jr-index-title"><span class="jr-num" aria-hidden="true">02</span> The whole issue</h2>
-        <p>Every dispatch, in the order it was filed.</p>
-      </header>
-      <ol class="jr-list">
-        ${issue.map((post) => `
-        <li class="jr-list-row">
-          <a href="${post.url}">
-            <span class="jr-list-vol" aria-hidden="true">${post.volume}</span>
-            <span class="jr-list-main">
-              <span class="jr-list-title">${post.title}</span>
-              <span class="jr-list-cat">${post.category}</span>
-            </span>
-            <span class="jr-list-date">${post.date}</span>
-            <span class="jr-list-time">${post.minutes} min</span>
-            <span class="jr-list-go" aria-hidden="true"><i data-lucide="arrow-up-right"></i></span>
-          </a>
-        </li>`).join('')}
-      </ol>
-    </div>
-  </section>
+    <!-- 01 · the index: every dispatch, with the shape of the writing visible -->
+    <section class="jrn-index" aria-labelledby="jrn-index-title">
+      <div class="jrn-shell">
+        <header class="jrn-index-head">
+          <h2 class="jrn-index-title" id="jrn-index-title"><span class="jrn-num" aria-hidden="true">01</span> The issue, in full</h2>
+          <p class="jrn-index-sub">Every dispatch in the order it was filed. Each one is a feature — a scene, five or six chapters, and a note to close.</p>
+        </header>
 
-  <!-- 03 · the letter -->
-  <section class="jr-letter" aria-labelledby="jr-letter-title">
-    <div class="jr-shell">
-      <div class="jr-letter-grid">
-        <div class="jr-letter-copy">
-          <h2 class="jr-letter-title" id="jr-letter-title">One letter, <em>once a month.</em></h2>
-          <p>What the kitchen is cooking, what landed in the cellar, and first refusal on the long table. Written by Elena, never by a marketing team.</p>
-          <p class="jr-letter-foot"><a href="/pages/reservations.html"><span>Or skip the reading and take a chair</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a></p>
+        <nav class="jrn-filter" aria-label="Filter dispatches by section">
+          <button class="jrn-filter-btn is-active" type="button" data-jrn-filter="all" aria-pressed="true">All <span>${String(issue.length).padStart(2, '0')}</span></button>
+          ${sections.map(([key, label]) => `<button class="jrn-filter-btn" type="button" data-jrn-filter="${key}" aria-pressed="false">${label} <span>${String(shelf.filter((post) => post.sectionKey === key).length).padStart(2, '0')}</span></button>`).join('')}
+        </nav>
+
+        <ol class="jrn-rows" data-jrn-rows>
+          ${issue.map(shelfRow).join('')}
+        </ol>
+        <p class="jrn-filter-empty" data-jrn-empty hidden>No dispatches in this strand yet. <button type="button" data-jrn-filter="all">Show everything</button></p>
+      </div>
+    </section>
+
+    <!-- 02 · the strands: the shelf, read by subject -->
+    <section class="jrn-strands" aria-labelledby="jrn-strands-title">
+      <div class="jrn-shell">
+        <header class="jrn-index-head">
+          <h2 class="jrn-index-title" id="jrn-strands-title"><span class="jrn-num" aria-hidden="true">02</span> Read by subject</h2>
+          <p class="jrn-index-sub">The issue has four running strands. Open one, or read them all the way through from the top.</p>
+        </header>
+        <div class="jrn-strand-stack" data-jrn-strands>
+          ${readingList}
         </div>
-        <form id="journal-newsletter-form" class="jr-form" novalidate>
-          <div class="jr-field">
-            <label for="jr-email">Email</label>
-            <input id="jr-email" name="email" type="email" required placeholder="you@wherever.com" autocomplete="email" spellcheck="false">
-            <button class="jr-submit" type="submit">
+      </div>
+    </section>
+
+    <!-- 03 · the desk: how a dispatch gets made, and how to write one -->
+    <section class="jrn-desk" aria-labelledby="jrn-desk-title">
+      <div class="jrn-shell jrn-desk-grid">
+        <div class="jrn-desk-copy">
+          <p class="jrn-desk-kicker">03 <span aria-hidden="true">/</span> The desk</p>
+          <h2 class="jrn-desk-title" id="jrn-desk-title">Written slowly,<br><em>on purpose.</em></h2>
+          <p class="jrn-desk-lede">A dispatch is not a press release. It starts as a note in somebody’s phone after service, gets argued about at the staff table, gets written on a Tuesday, and gets edited by two people who are not the author. That is why there are eight of them and not eighty.</p>
+          <ul class="jrn-desk-notes">
+            <li><span>01</span><p>Facts are checked against the suppliers, the cellar book and the kitchen diary before anything is published.</p></li>
+            <li><span>02</span><p>Every photograph was taken in this building, during service, by somebody on the team.</p></li>
+            <li><span>03</span><p>Have a story that belongs here? The desk reads everything, and replies to most of it.</p></li>
+          </ul>
+          <a class="jrn-desk-link" href="/pages/contact.html"><span>Write to the journal</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="jrn-desk-aside">
+          <figure class="jrn-desk-figure">
+            <img src="/images/chef-portrait.jpg" alt="A Flavoro cook at the pass, mid-service">
+            <figcaption>The pass, 8:45 PM · Photographed for the journal</figcaption>
+          </figure>
+          <blockquote class="jrn-desk-quote">
+            <p>“The only honest way to write about food is to be in the room while it is being made.”</p>
+            <cite>Matteo Vance · Executive Chef</cite>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 · the letter -->
+    <section class="jrn-letter" aria-labelledby="jrn-letter-title">
+      <div class="jrn-shell jrn-letter-grid">
+        <div class="jrn-letter-copy">
+          <p class="jrn-letter-kicker">04 <span aria-hidden="true">/</span> The letter</p>
+          <h2 class="jrn-letter-title" id="jrn-letter-title">One letter,<br><em>once a month.</em></h2>
+          <p class="jrn-letter-lede">What the kitchen is cooking, what landed in the cellar, and first refusal on the long table. Written by Elena, never by a marketing team — and it is the only thing we send.</p>
+          <p class="jrn-letter-link"><a href="/pages/reservations.html"><span>Or skip the reading and take a chair</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a></p>
+        </div>
+        <form id="journal-newsletter-form" class="jrn-form" novalidate>
+          <label class="jrn-form-label" for="jrn-email">Your email address</label>
+          <div class="jrn-form-field">
+            <input id="jrn-email" name="email" type="email" required placeholder="you@wherever.com" autocomplete="email" spellcheck="false">
+            <button class="jrn-form-submit" type="submit">
               <span>Send it to me</span>
               <i data-lucide="arrow-right" aria-hidden="true"></i>
             </button>
           </div>
-          <p class="jr-form-note" data-jr-note role="status">Twice a month at most. One click to leave.</p>
+          <p class="jrn-form-note" data-jr-note role="status">Twice a month at most. One click to leave.</p>
         </form>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <script type="application/json" class="jr-issue-data">${JSON.stringify(shelf).replace(/</g, '\\u003c')}</script>${closePage()}`
+    <script type="application/json" class="jr-issue-data">${JSON.stringify(shelf).replace(/</g, '\\u003c')}</script>
+  </main>${footer()}`
 }
 
 function contact() {
@@ -1194,62 +1249,11 @@ function contact() {
       <header class="ct-head">
         <span class="ct-num" aria-hidden="true">01</span>
         <h2 class="ct-head-title" id="ct-arrive-title">The last two hundred <em>metres.</em></h2>
-        <p class="ct-head-note">Hayes Valley is small. Everything below is what happens between the corner and the chair.</p>
+        <p class="ct-head-note">Seven junctions ring the block. Pick any one of them and the road leads back to the same lit door.</p>
       </header>
 
-      <div class="ct-arrive-grid">
-        <figure class="ct-plan">
-          <svg viewBox="0 0 460 360" role="img" aria-labelledby="ct-plan-title ct-plan-desc">
-            <title id="ct-plan-title">Walking route to 742 Emberwood Lane</title>
-            <desc id="ct-plan-desc">A plan of the block between Franklin, Fell and Oak Street. A dashed route leads from the Van Ness stop up Oak to the door on the corner of Franklin and Fell, marked with an ember lamp.</desc>
-            <g class="ct-plan-blocks" aria-hidden="true">
-              <rect x="24" y="24" width="112" height="72" />
-              <rect x="24" y="128" width="112" height="72" />
-              <rect x="24" y="232" width="112" height="88" />
-              <rect x="204" y="24" width="120" height="72" />
-              <rect x="204" y="128" width="120" height="72" />
-              <rect x="204" y="232" width="120" height="88" />
-              <rect x="392" y="24" width="48" height="72" />
-              <rect x="392" y="128" width="48" height="72" />
-              <rect x="392" y="232" width="48" height="88" />
-            </g>
-            <g class="ct-plan-streets" aria-hidden="true">
-              <line x1="0" y1="112" x2="460" y2="112" />
-              <line x1="0" y1="216" x2="460" y2="216" />
-              <line x1="170" y1="0" x2="170" y2="360" />
-              <line x1="358" y1="0" x2="358" y2="360" />
-            </g>
-            <g class="ct-plan-labels" aria-hidden="true">
-              <text x="216" y="107" class="ct-plan-label">FELL STREET</text>
-              <text x="216" y="211" class="ct-plan-label">OAK STREET</text>
-              <text x="0" y="0" class="ct-plan-label" transform="translate(164 300) rotate(-90)">FRANKLIN STREET</text>
-            </g>
-            <path class="ct-plan-route" d="M52 344 L52 216 L170 216 L170 128"
-              pathLength="1" fill="none" aria-hidden="true" />
-            <circle class="ct-plan-start" cx="52" cy="344" r="3.5" aria-hidden="true" />
-            <g class="ct-plan-pin" aria-hidden="true">
-              <circle class="ct-plan-halo" cx="170" cy="112" r="20" />
-              <circle class="ct-plan-dot" cx="170" cy="112" r="5" />
-            </g>
-            <text class="ct-plan-door" x="184" y="104" aria-hidden="true">742</text>
-          </svg>
-          <figcaption class="ct-plan-caption">
-            <span>Eight minutes from the Van Ness stop.</span>
-            <a href="${HOUSE.mapsHref}" target="_blank" rel="noopener noreferrer">Open in maps <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
-          </figcaption>
-        </figure>
-
-        <ol class="ct-route">
-          ${ROUTE.map((step) => `
-          <li class="ct-route-step">
-            <span class="ct-route-index" aria-hidden="true">${step.index}</span>
-            <div class="ct-route-body">
-              <h3>${step.title}</h3>
-              <p>${step.copy}</p>
-              <span class="ct-route-meta">${step.meta}</span>
-            </div>
-          </li>`).join('')}
-        </ol>
+      <div class="ct-arrive-grid ct-arrive-grid--map">
+        ${renderRoadMapGallery()}
       </div>
 
       <ul class="ct-chips">
@@ -1787,226 +1791,183 @@ function people() {
   </section>${closePage()}`
 }
 
-const articles = {
-  'journal-gathering': {
-    title: 'The Art of the Long Table: Why Dinners Should Linger',
-    eyebrow: 'HOSPITALITY &amp; RITUALS · VOL. IV',
-    subtitle: 'In an era of timed seatings and frantic table turns, reclaiming the restorative slowness of the evening meal.',
-    author: 'Elena Rostova',
-    role: 'Director of Hospitality',
-    date: 'October 2, 2026',
-    readTime: '5 min read',
-    image: '/images/restaurant-interior.jpg',
-    caption: 'The Main Dining Salon at Flavoro during late evening service, bathed in candlelight and quiet conversation.',
-    pullQuote: '“A truly generous dining room does not mark time by watches or bill presentation, but by the quiet expansion of intimacy around the table.”',
-    paragraphs: [
-      'The modern urban restaurant has, in so many subtle ways, become an engine of accelerated turnover. Digital countdowns tick behind hosts’ stations, dessert menus arrive before silverware is cleared, and ambient acoustics are calibrated to hurry guests toward the door. At Flavoro, we consciously designed our service cadence to push back against this relentless velocity.',
-      'A shared meal is one of the last secular sanctuaries where people sit opposite one another without screens, without agendas, and without an urgent destination. When guests cross our threshold and sink into curved flax banquettes, the room’s acoustic cedar baffling immediately lowers the ambient decibel level. The lighting—cast solely by real tallow candles and the amber glow of the live hearth—mimics the circadian transition from twilight to late evening.',
-      'We intentionally structure our course intervals with breath. Between the wood-seared ocean catch and the braised short rib, there is a ten-minute pause—a glass of wine is refreshed, sourdough crusts are broken, and conversations find their second wind. We have observed that the most memorable conversations of our lives rarely happen during the first hour of dinner; they happen in the golden margin after the plates are cleared, when someone uncorks an unexpected bottle of amaro.',
-      'Hospitality is not a performance of stiff efficiency. It is the art of giving guests permission to unhurriedly inhabit their own lives. As long as our kitchen fire burns, your chair belongs to you.'
-    ],
-    nextKey: 'journal-dayboat',
-    nextTitle: 'The Day-Boat Line: 4:00 AM Harvests with Bodega Bay Fishermen'
-  },
-  'journal-craft': {
-    title: 'The Geometry of Fresh Semolina: Hand-Rolled Heritage Pastas',
-    eyebrow: 'HEARTH &amp; TECHNIQUE · VOL. III',
-    subtitle: 'From 36-hour wild fermentation to bronze-die extrusions, exploring the microscopic texture that captures wood-fired sauces.',
-    author: 'Clara Chen',
-    role: 'Head Baker &amp; Pastry Director',
-    date: 'September 16, 2026',
-    readTime: '4 min read',
-    image: '/images/menu/pasta-editorial.jpg',
-    caption: 'Hand-kneaded semolina noodles dusted with heirloom flour on the marble prep pass.',
-    pullQuote: '“Pasta is not merely a carbohydrate vehicle; it is an architectural surface engineered to hold emulsion and heat.”',
-    paragraphs: [
-      'To understand our pasta program, you have to understand grain at the cellular level. Most commercial pasta relies on hyper-processed durum semolina that has been stripped of its germ and bran to maximize shelf stability. At Flavoro, our flour arrives twice a week from Petaluma Grain Mill, stone-ground from certified organic California Sonora and red fife wheat berries.',
-      'Every morning at 6:30 AM, our marble pasta counter becomes a laboratory of hydration and tactile instinct. Because freshly milled flour contains live enzymes and fluctuating ambient moisture, no two batches behave identically. Clara Chen assesses the dough by thumb pressure alone—feeling for that elusive springiness that indicates gluten development without over-kneading.',
-      'Our pasta shapes are either rolled entirely by hand using three-foot maple matterelli or extruded through antique hand-turned bronze dies. Bronze imparts a microscopically rough, porous skin to each strand—a frosted texture that traps braised sugo, brown butter, and emulsified pasta water, rather than letting sauce slip off into a pool at the bottom of the bowl.',
-      'Cooked in heavily salted, rolling water for mere moments, then finished directly in the pan over glowing white oak embers, the noodles absorb the smoky savor of bone marrow and roasted sweet corn. It is pasta that remembers the soil it grew in and the hands that shaped it.'
-    ],
-    nextKey: 'journal-vintages',
-    nextTitle: 'Living Wines: Minimal-Intervention Cellars of the Central Coast'
-  },
-  'journal-hospitality': {
-    title: 'Invisible Hospitality: The Choreography of Intuitive Dining',
-    eyebrow: 'HOSPITALITY &amp; RITUALS · VOL. II',
-    subtitle: 'Why the most profound moments of service are never theatrical, but felt in the anticipation of unspoken needs.',
-    author: 'Elena Rostova',
-    role: 'Director of Hospitality',
-    date: 'August 28, 2026',
-    readTime: '5 min read',
-    image: '/images/editorial/dining-room.jpg',
-    caption: 'Service director Elena Rostova reviewing evening floor assignments in the dining salon.',
-    pullQuote: '“True hospitality anticipates before it is summoned, and dissolves into the background before it can draw attention to itself.”',
-    paragraphs: [
-      'There is a curious paradox at the heart of fine dining. In many renowned institutions, service has evolved into an ostentatious theater—servers reciting ten-minute monologues over an amuse-bouche, silver cloches lifted with choreographed flourishes, and stiff interruptions that shatter the private intimacy of the table.',
-      'At Flavoro, our operational philosophy is rooted in what we call ‘invisible hospitality.’ Our servers are trained to read the subtle body language of a dining room: the slight glance toward the bar that indicates an empty glass, the leaning-in of two lovers that signals they should not be disturbed, or the inquisitive pause of a diner examining an unfamiliar varietal.',
-      'Water glasses are replenished from side angles without interrupting conversation. Cutlery is replaced between courses with silent gliding movements. If a guest steps away from the table to take a phone call, their hot plate is held at the hearth pass until they return, ensuring their food is never allowed to cool into lukewarm compromise.',
-      'When service is performed with quiet intuition, guests do not marvel at the staff—they simply feel completely at ease, cherished, and entirely present in the company of their companions. That is the only measure of hospitality that truly counts.'
-    ],
-    nextKey: 'journal-foraging',
-    nextTitle: 'In Search of Heirloom Bitters: Wild Botanicals of the Coastal Range'
-  },
-  'journal-dayboat': {
-    title: 'The Day-Boat Line: 4:00 AM Harvests with Bodega Bay Fishermen',
-    eyebrow: 'TERROIR &amp; PRODUCERS · VOL. V',
-    subtitle: 'How line-caught Pacific seafood travels from dawn tides to our white oak embers before nightfall.',
-    author: 'Matteo Vance',
-    role: 'Executive Chef &amp; Co-Founder',
-    date: 'September 24, 2026',
-    readTime: '6 min read',
-    image: '/images/market-fish.jpg',
-    caption: 'Pacific black cod glazed with wild coastal kelp and roasted over hot coals.',
-    pullQuote: '“When fish is pulled from cold ocean currents at dawn and touches hardwood embers that evening, you are tasting the exact tide of that day.”',
-    paragraphs: [
-      'At four in the morning, Bodega Bay is shrouded in cold maritime fog. The water in the harbor is ink-black, smelling of salt kelp, wet cedar pilings, and clean diesel exhaust. This is where our seafood sourcing begins, aboard the F/V Althea with Captain Sorenson, a third-generation line fisherman whose family has worked these coastal shelves since the 1960s.',
-      'Unlike industrial trawlers that spend weeks at sea packing catches in sub-zero freezer holds, Captain Sorenson operates exclusively as a ‘day-boat.’ His crew sets out before dawn, lines the deep continental trench for sablefish (black cod), rock cod, and diver scallops, and returns to the harbor wharf before the afternoon fog burns away.',
-      'By 2:30 PM, the day’s haul arrives at Flavoro’s kitchen receiving door. The fish still have crystalline eyes, firm resilient flesh, and the translucent sheen of live ocean water. There is no fishy odor—only the brisk, electric scent of the cold North Pacific current.',
-      'We prepare these catches with absolute restraint. The black cod is cured briefly in a wild coastal kelp brine, hung above the hearth for two hours to dry its skin, then seared skin-side-down over red-hot white oak coals. The skin crisps into delicate crackling while the interior flakes like butter. Sourcing like this demands humility: our job is not to conceal the ocean, but to let the embers frame it.'
-    ],
-    nextKey: 'journal-embers',
-    nextTitle: 'The Dawn Embers: Reviving 700° White Oak Woodcraft'
-  },
-  'journal-vintages': {
-    title: 'Living Wines: Minimal-Intervention Cellars of the Central Coast',
-    eyebrow: 'LIVING CELLAR · VOL. VI',
-    subtitle: 'Discarding laboratory additives in favor of spontaneous native ferments, amphora vessels, and ancient vines.',
-    author: 'Julian Rossi',
-    role: 'Beverage Director &amp; Master Sommelier',
-    date: 'September 08, 2026',
-    readTime: '8 min read',
-    image: '/images/cocktails.jpg',
-    caption: 'Unfiltered, low-intervention natural wines poured from artisanal Central Coast estates.',
-    pullQuote: '“A conventional wine reflects the chemist’s laboratory; a living wine reflects the weather, geology, and microorganisms of its hillside.”',
-    paragraphs: [
-      'Much of the modern industrial wine industry operates under a polite fiction. Consumers assume wine is simply crushed grapes fermented in barrels. In reality, commercial winemaking permits over sixty legal chemical additives—synthetic tannins, cultured aromatic yeasts, powdered acidifiers, and heavy sulfur doses designed to homogenize flavor profiles across different vintages.',
-      'At Flavoro, our 600-bottle cellar represents a total rejection of that sterile monoculture. Master Sommelier Julian Rossi spends weeks each season walking the slopes of the Santa Cruz Mountains, Ballard Canyon, and Mendocino Ridge, visiting independent vignerons who farm dry, biodynamic, and ungrafted old vines.',
-      'These winemakers allow spontaneous fermentation initiated solely by the indigenous yeasts clinging to the grape skins. The wines ferment in unglazed terracotta amphorae, neutral Austrian casks, or concrete eggs. There is no fining, no sterile filtration, and either zero or minuscule sulfur additions at bottling.',
-      'In the glass, these living wines possess an astonishing vitality. They pulse with energetic acidity, savory mineral textures, and aromatics that evolve dramatically over the course of an evening. Paired against wood-fired proteins and roasted wild mushrooms, they don\'t simply complement the dish—they ignite a conversation.'
-    ],
-    nextKey: 'journal-craft',
-    nextTitle: 'The Geometry of Fresh Semolina: Hand-Rolled Heritage Pastas'
-  },
-  'journal-embers': {
-    title: 'The Dawn Embers: Reviving 700° White Oak Woodcraft',
-    eyebrow: 'HEARTH &amp; TECHNIQUE · VOL. I',
-    subtitle: 'Why the primordial energy of aged hardwood embers unlocks caramelization and botanical smoke that gas burners cannot touch.',
-    author: 'Matteo Vance',
-    role: 'Executive Chef &amp; Co-Founder',
-    date: 'October 14, 2026',
-    readTime: '7 min read',
-    image: '/images/hero-pasta.jpg',
-    caption: 'The glowing white oak hearth at Flavoro, stoked to 700 degrees Fahrenheit before evening service.',
-    pullQuote: '“Gas provides heat, but wood provides spirit. Cooking over live embers forces a chef to listen, observe, and surrender to instinct.”',
-    paragraphs: [
-      'Every morning at 6:00 AM, before the prep cooks arrive and before the first deliveries knock at the rear door, our hearth is kindled. We burn seasoned California white oak and mountain fruitwoods that have aged for a minimum of eighteen months. By midday, those roaring logs have collapsed into a deep, glowing bed of 700-degree embers that radiate pure, clean infrared energy.',
-      'Modern commercial kitchen equipment is built for repeatability—you turn a dial to level six, and a gas burner maintains an identical BTU output indefinitely. But gas produces water vapor as a byproduct of combustion, creating a subtly humid cooking zone that dampens deep caramelization. Live wood embers, by contrast, emit intense dry radiant heat.',
-      'When a prime cut of short rib or a basket of sweet heirloom carrots is lowered onto our cast-iron grates just inches above the coals, the Maillard reaction occurs with blistering speed. Natural sugars caramelize instantly into a brittle, savory crust, sealing in moisture before the interior can dry out.',
-      'Simultaneously, trace aromatic oils within the oak vaporize into wisps of botanical smoke, infusing the food with whispers of roasted almond, dried herbs, and sweet sap. Cooking over fire cannot be automated with a thermostat. It requires intuition, patience, and a constant dialogue between the cook and the flame.'
-    ],
-    nextKey: 'journal-gathering',
-    nextTitle: 'The Art of the Long Table: Why Dinners Should Linger'
-  },
-  'journal-foraging': {
-    title: 'In Search of Heirloom Bitters: Wild Botanicals of the Coastal Range',
-    eyebrow: 'LIVING CELLAR · VOL. VII',
-    subtitle: 'Foraging wild mugwort, coastal bay laurel, and elderflower for our zero-waste botanical amari program.',
-    author: 'Julian Rossi',
-    role: 'Beverage Director &amp; Master Sommelier',
-    date: 'August 19, 2026',
-    readTime: '6 min read',
-    image: '/images/editorial/bartender.jpg',
-    caption: 'Infusions of coastal botanicals and bitter mountain herbs maturing in glass demijohns.',
-    pullQuote: '“A digestif is the punctuation mark of the meal. It should taste of the mountains that shelter the valley.”',
-    paragraphs: [
-      'On Monday mornings when the dining rooms are quiet, Julian Rossi and our bar team lace up hiking boots and head into the fog-drenched chaparral of the Marin headlands and Coastal Range. With sustainable foraging permits in hand, we clip wild mugwort, yarrow, stinging nettle, and coastal sage.',
-      'Back at the bar pass, these wild herbs are matched with citrus peels saved from our morning pastry service and stone fruit pits from our seasonal tarts. We practice a strict zero-waste philosophy: nothing aromatic is discarded.',
-      'The botanicals undergo extended macerations in neutral grape spirits distilled from organic California wine skins. We monitor the infusions daily, balancing bitter gentian and wild wormwood against sweet clover honey and caramelized raw turbinado syrup.',
-      'The resulting house amari and botanical vermouths are unlike anything found on a commercial backbar. They possess resinous pine notes, refreshing bitter clarity, and a grounding herbal warmth that settles the palate after a decadent wood-fired feast.'
-    ],
-    nextKey: 'journal-sunday',
-    nextTitle: 'The Sunday Long Table: Communal Feasting &amp; Sourdough Rituals'
-  },
-  'journal-sunday': {
-    title: 'The Sunday Long Table: Communal Feasting &amp; Sourdough Rituals',
-    eyebrow: 'TERROIR &amp; PRODUCERS · VOL. VIII',
-    subtitle: 'The weekly community ritual where hot sourdough is sliced, whole roasts are carved, and strangers become companions.',
-    author: 'Clara Chen',
-    role: 'Head Baker &amp; Pastry Director',
-    date: 'August 10, 2026',
-    readTime: '5 min read',
-    image: '/images/breakfast.jpg',
-    caption: 'Freshly baked sourdough boules, whipped cultured butter, and communal platters during the Sunday Long Table feast.',
-    pullQuote: '“When you pass a heavy ceramic platter down a twenty-foot cedar table, the invisible walls between strangers vanish.”',
-    paragraphs: [
-      'Sunday service at Flavoro holds a special place in our brigade\'s heart. We strip the dining room of its individual tables and assemble one continuous, twenty-foot cedar banquet that runs the full length of the salon. There are no menus placed in front of diners—only carafes of chilled coastal cider, crusty loaves of hot sourdough, and ramekins of smoked ember butter.',
-      'At 12:30 PM, the kitchen bell chimes and service begins family-style. Platters of ember-roasted heritage pork shoulders, charred seasonal pole beans, and crispy cassava rosti cakes are brought directly from the hearth pass and placed down the center of the table.',
-      'Guests who arrived as strangers find themselves reaching across to pour wine for their neighbors, sharing stories, and laughing over shared dessert boards of warm stone-fruit cobbler and bourbon cream. It evokes the ancient communal banquets of the Mediterranean, transplanted into the heart of Northern California.',
-      'It is a vibrant reminder that food was never meant to be consumed in solitary isolation. The greatest meals have always been about the circle of hands gathered around the warmth of the fire.'
-    ],
-    nextKey: 'journal-embers',
-    nextTitle: 'The Dawn Embers: Reviving 700° White Oak Woodcraft'
-  }
-}
-
-
 /* -------------------------------------------------------------------------
    The journal issue — one source of truth for the index, the shelf and the
-   article pages. `articles` holds the writing; this shapes it for the index.
+   article pages. The writing lives in `src/data/journal.js`; this shapes it
+   for the index and for each dispatch page.
    ------------------------------------------------------------------------- */
-
-const JOURNAL_ORDER = [
-  'journal-embers',
-  'journal-gathering',
-  'journal-dayboat',
-  'journal-craft',
-  'journal-vintages',
-  'journal-hospitality',
-  'journal-foraging',
-  'journal-sunday',
-]
 
 const titleCase = (value) =>
   String(value)
     .toLowerCase()
     .replace(/(^|[\s&])([a-z])/g, (match, lead, letter) => lead + letter.toUpperCase())
 
+const ROMAN = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8 }
+
+const plain = (value) => String(value).replace(/&amp;/g, '&').replace(/<[^>]+>/g, '')
+
+/* Written in the studio and published from the admin. Kept out of the static
+   module so an edit here can never damage the shipped issue, and merged into
+   the same list so everything downstream treats them identically. */
+/* 1 → one, 8 → eight, 9 → nine. The issue copy counts itself. */
+const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+function wordCount(n) {
+  const word = NUMBER_WORDS[n] || String(n)
+  return word.charAt(0).toUpperCase() + word.slice(1)
+}
+
+function studioArticles() {
+  const out = {}
+  for (const post of getPublishedPosts()) {
+    if (!post?.slug) continue
+    // Every field the cover and the article templates interpolate is coerced
+    // to a string here. A studio post is allowed to omit the dek, the role,
+    // the caption — a template literal would otherwise print "undefined".
+    const str = (value) => (typeof value === 'string' ? value : '')
+    out[`journal-${post.slug}`] = {
+      ...post,
+      title: str(post.title) || 'Untitled dispatch',
+      // The article renderer parses `eyebrow` for its category and volume.
+      eyebrow: str(post.eyebrow) || 'THE JOURNAL',
+      subtitle: str(post.subtitle),
+      dek: str(post.dek),
+      standfirst: str(post.standfirst),
+      author: str(post.author) || 'The Flavoro Journal',
+      role: str(post.role),
+      date: str(post.date),
+      caption: str(post.caption),
+      pullQuote: str(post.pullQuote),
+      closeNote: str(post.closeNote),
+      sidebar: post.sidebar?.items?.length
+        ? { title: post.sidebar.title || 'The particulars', items: post.sidebar.items }
+        : undefined,
+      nextKey: '',
+      nextTitle: '',
+      studio: true,
+    }
+  }
+  return out
+}
+
 function journalIssue() {
-  return JOURNAL_ORDER.filter((slug) => articles[slug]).map((slug) => {
-    const article = articles[slug]
-    const [category = '', volume = ''] = article.eyebrow
+  const live = studioArticles()
+  // Studio posts lead the issue, newest first; the shipped eight follow in
+  // their own order. A post with no sections still renders — the article
+  // page already guards the chapter and contents blocks.
+  const order = [...Object.keys(live), ...JOURNAL_ORDER.filter((slug) => articles[slug])]
+  return order.map((slug, index) => {
+    const article = live[slug] || articles[slug]
+    const [category = '', , volumePart = ''] = article.eyebrow
       .replace(/&amp;/g, '&')
       .split('·')
       .map((part) => part.trim())
-    const plainTitle = article.title.replace(/&amp;/g, '&')
-    const minutes = Number.parseInt(article.readTime, 10) || 5
+    // Shipped entries store "VOL. I" whole; the studio stores the same string.
+    // The cover renders "Volume VOL. IX" otherwise.
+    const volume = volumePart.replace(/^vol\.?\s*/i, '')
+    const plainTitle = plain(article.title)
+    const words = [
+      ...(article.paragraphs || []),
+      ...(article.sections || []).flatMap((section) => section.paragraphs || []),
+    ]
+      .join(' ')
+      .replace(/<[^>]+>/g, '')
+      .split(/\s+/)
+      .filter(Boolean).length
+    // 200 words a minute is the honest pace for literary prose; the floor
+    // keeps a short dispatch from advertising a two-minute read.
+    const minutes = Math.max(5, Math.round(words / 200))
+    const readTime = `${minutes} min read`
     return {
       slug,
-      url: `/pages/${slug}.html`,
+      index,
+      // A studio dispatch has no dedicated file on disk, so it is addressed
+      // through the shared shell instead.
+      url: article.studio
+        ? `/pages/dispatch.html?slug=${encodeURIComponent(String(article.slug || slug).replace(/^journal-/, ''))}`
+        : `/pages/${slug}.html`,
       title: plainTitle,
       short: plainTitle.split(':')[0],
       category: titleCase(category),
       categoryRaw: category,
       sectionKey: category.toLowerCase().split(' ')[0].replace(/[^a-z]/g, ''),
       volume: volume.replace('VOL.', '').trim(),
-      subtitle: article.subtitle,
+      subtitle: plain(article.subtitle),
+      dek: plain(article.dek || ''),
       image: article.image,
-      caption: article.caption,
-      author: article.author,
-      role: article.role,
+      caption: plain(article.caption),
+      author: plain(article.author),
+      role: plain(article.role),
       date: article.date,
-      readTime: article.readTime,
+      readTime,
       minutes,
+      words,
+      chapters: (article.sections || []).length + 1,
+      studio: Boolean(article.studio),
     }
   })
 }
 
-/* The bookcase is grouped by section, the way a shelf actually is; the index
-   above stays chronological, the way a bound volume actually is. */
-const JOURNAL_SECTIONS = ['HEARTH & TECHNIQUE', 'HOSPITALITY & RITUALS', 'TERROIR & PRODUCERS', 'LIVING CELLAR']
-const ROMAN = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8 }
+/* Photographs available to the body of a dispatch, each with the caption that
+   describes what is actually in the frame. Captions travel with the image, so
+   a picture can never end up under a line about something else. Each carries
+   the strands it genuinely belongs to, which is how a piece about pasta gets
+   pictures of pasta and a piece about fire gets pictures of the fire. */
+const DISPATCH_PHOTOS = [
+  { src: '/images/chef-team.jpg', strands: ['hearth', 'hospitality'], caption: 'The brigade at the pass before service, the counter behind them still cold.' },
+  { src: '/images/chef-portrait.jpg', strands: ['hearth'], caption: 'The chef on the fire an hour into the burn-down, reading the bed by hand rather than by thermometer.' },
+  { src: '/images/private-dining.jpg', strands: ['hospitality', 'living'], caption: 'The alcove, laid for eight, two hours before the doors open.' },
+  { src: '/images/editorial/dining-room.jpg', strands: ['hospitality', 'living'], caption: 'The dining room between courses, when the room belongs to the guests.' },
+  { src: '/images/restaurant-interior.jpg', strands: ['hospitality'], caption: 'The floor at 7:40 PM, when every table in the room is inside one sightline.' },
+  { src: '/images/editorial/bartender.jpg', strands: ['living'], caption: 'Behind the bar at the start of service, a cocktail built over a single clear cube.' },
+  { src: '/images/cocktails.jpg', strands: ['living'], caption: 'Three from the by-the-glass list, poured and set on the bar top.' },
+  { src: '/images/market-fish.jpg', strands: ['terroir', 'hearth'], caption: 'Black cod landed the same morning, finished over embers with a kelp butter.' },
+  { src: '/images/menu/pasta-editorial.jpg', strands: ['hearth', 'terroir'], caption: 'Rigatoni, bronze-die extruded, holding sauce in the ridges the shape intends.' },
+  { src: '/images/menu/shared-pasta.jpg', strands: ['terroir', 'hearth'], caption: 'Three plates from one batch of semolina, sauced at the pass and sent together.' },
+  { src: '/images/breakfast.jpg', strands: ['terroir', 'hospitality'], caption: 'The pastry pass on a Sunday morning, before the room fills.' },
+  { src: '/images/dessert.jpg', strands: ['living', 'hearth'], caption: 'The last course of the tasting menu, plated to be shared whether or not anyone asked.' },
+  { src: '/images/garden-salad.jpg', strands: ['terroir'], caption: 'The market salad, built from whatever the growers brought that morning.' },
+  { src: '/images/hero-pasta.jpg', strands: ['hearth'], caption: 'Pasta finished over the coals, turned twice at the pass before it leaves the kitchen.' },
+  { src: '/images/menu/cocktail.jpg', strands: ['living'], caption: 'A single aperitivo, unadorned, waiting on the runner.' },
+  { src: '/images/menu/chocolate-dessert.jpg', strands: ['living', 'terroir'], caption: 'Bitter chocolate, sea salt, and the end of an evening.' },
+  { src: '/images/editorial/hearth-coals.jpg', strands: ['hearth'], caption: 'The white oak bed at 6:40 in the morning, before the first pan is set on the grate.' },
+  { src: '/images/editorial/natural-wine.jpg', strands: ['living'], caption: 'An unfiltered red poured at the bar, cloudy in the glass and still working.' },
+]
 
+/* Two body photographs per dispatch. Chosen by hand rather than by rotation:
+   the house archive is small, and a picture that merely fills a slot reads as
+   filler. Each dispatch's hero is never repeated, and the two figures never
+   match each other. */
+const DISPATCH_FIGURES = {
+  // I — the coals themselves, and the brigade that works over them
+  'journal-embers': ['/images/chef-portrait.jpg', '/images/chef-team.jpg'],
+  // II — the alcove laid for eight, and the room once it is full
+  'journal-gathering': ['/images/private-dining.jpg', '/images/editorial/dining-room.jpg'],
+  // III — the room the fish ends up in, and the brigade that cooks it
+  'journal-dayboat': ['/images/restaurant-interior.jpg', '/images/chef-team.jpg'],
+  // IV — semolina, sauced and sent; and the pass it leaves through
+  'journal-craft': ['/images/menu/shared-pasta.jpg', '/images/chef-team.jpg'],
+  // V — an unfiltered red, and the bar it is poured behind
+  'journal-vintages': ['/images/editorial/bartender.jpg', '/images/menu/cocktail.jpg'],
+  // VI — the floor, and the alcove that has to be ready before anyone arrives
+  'journal-hospitality': ['/images/restaurant-interior.jpg', '/images/private-dining.jpg'],
+  // VII — the drinks the bitters end up in
+  'journal-foraging': ['/images/cocktails.jpg', '/images/menu/cocktail.jpg'],
+  // VIII — the long table, and the platters that travel down it
+  'journal-sunday': ['/images/private-dining.jpg', '/images/menu/shared-pasta.jpg'],
+}
+
+function dispatchPhotos(article, key, index) {
+  const chosen = (DISPATCH_FIGURES[key] || []).filter((src) => src && src !== article.image)
+  const fallback = DISPATCH_PHOTOS.filter((photo) => photo.src !== article.image)
+  const pick = (i) => DISPATCH_PHOTOS.find((photo) => photo.src === chosen[i]) || fallback[i % fallback.length]
+  const lead = pick(0)
+  let second = pick(1)
+  if (second.src === lead.src) second = fallback[(index + 2) % fallback.length]
+  return { lead, second }
+}
+
+/* The shelf is grouped by section, the way a bookcase actually is; the index
+   below stays chronological, the way a bound volume actually is. */
 function journalShelf(issue) {
   return [...issue].sort((a, b) => {
     const section = JOURNAL_SECTIONS.indexOf(a.categoryRaw) - JOURNAL_SECTIONS.indexOf(b.categoryRaw)
@@ -2015,98 +1976,187 @@ function journalShelf(issue) {
   })
 }
 
+/* -------------------------------------------------------------------------
+   A dispatch page. The order of the page follows the order a reader moves
+   through a magazine feature: they arrive at the scene, they read forward,
+   they take one thing away, and they find the next thing to read.
+   ------------------------------------------------------------------------- */
 function journalArticle(key) {
-  const article = articles[key] || articles['journal-embers']
-  return `${pageHero(article.eyebrow, article.title, article.subtitle, article.image, 'Blog')}
-  <article class="editorial-article section-pad">
-    <div class="container narrow">
-      <div class="article-top-nav">
-        <a class="article-back-link" href="/pages/blog.html">
-          <i data-lucide="arrow-left"></i> <span>Return to Flavoro Journal</span>
-        </a>
-      </div>
+  const article = studioArticles()[key] || articles[key] || articles['journal-embers']
+  const issue = journalIssue()
+  const index = issue.findIndex((post) => post.slug === key)
+  const current = issue[index >= 0 ? index : 0]
+  const nextKeyWanted = article.nextKey || issue[(index + 1) % Math.max(1, issue.length)]?.slug
+  const next = issue[(issue.findIndex((post) => post.slug === nextKeyWanted) + issue.length) % Math.max(1, issue.length)] || current
+  const others = issue.filter((post) => post.slug !== current.slug).slice(0, 3)
+  const paragraphs = article.paragraphs || []
+  const sections = article.sections || []
+  const [lead, ...opening] = paragraphs
+  const body = opening.slice(0, Math.ceil(opening.length / 2))
+  const later = opening.slice(Math.ceil(opening.length / 2))
+  const sidebar = article.sidebar
 
-      <header class="article-header-meta">
-        <div class="article-badge-row">
-          <span class="article-category-badge">${article.eyebrow}</span>
-          <span class="article-read-time"><i data-lucide="clock"></i> ${article.readTime}</span>
-          <span class="article-pub-date">${article.date}</span>
-        </div>
-        <div class="article-byline-card">
-          <div class="byline-avatar"><i data-lucide="award"></i></div>
-          <div class="byline-info">
-            <strong>By ${article.author}</strong>
-            <small>${article.role}</small>
+  // Two photographs besides the hero, so a long feature has real pictures in
+  // it rather than the same image twice. Both are drawn from the house archive
+  // and chosen per dispatch; nothing here repeats the hero or its neighbour.
+  const figures = dispatchPhotos(article, key, index >= 0 ? index : 0)
+  const second = figures.second.src
+  const secondCaption = figures.second.caption
+
+  const chapter = (entry, i) => `
+    <section class="art-chapter" aria-labelledby="art-ch-${i}">
+      <p class="art-chapter-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</p>
+      <h2 class="art-chapter-title" id="art-ch-${i}">${entry.heading}</h2>
+      ${entry.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('')}
+    </section>`
+
+  const toc = [sections.length ? 'The scene' : null, ...sections.map((entry) => entry.heading), (sidebar?.items?.length || article.closeNote) ? 'What to take away' : null]
+    .filter(Boolean)
+    .map((label, i) => `<li><a href="#art-${i === 0 ? 'scene' : i === sections.length + 1 || !sections.length ? 'takeaway' : `ch-${i}`}"><span>${String(i + 1).padStart(2, '0')}</span>${label}</a></li>`)
+    .join('')
+
+  return `${header('Blog')}
+  <main id="main-content" class="art">
+    <!-- the arrival: the photograph, the title, and everything you need to decide -->
+    <header class="art-hero" aria-labelledby="art-title">
+      <div class="art-hero-media" aria-hidden="true"><img src="${article.image}" alt="" data-art-drift></div>
+      <div class="art-hero-inner">
+        <nav class="art-crumbs" aria-label="Breadcrumb">
+          <a href="/pages/blog.html">The Journal</a>
+          <span aria-hidden="true">/</span>
+          <span>${plain(article.eyebrow.split('·')[0].trim())}</span>
+        </nav>
+        <p class="art-kicker">${plain(article.eyebrow.replace(/&amp;/g, '&'))}</p>
+        <h1 class="art-title" id="art-title">${article.title}</h1>
+        <p class="art-standfirst">${article.subtitle}</p>
+        <dl class="art-facts">
+          <div><dt>Written by</dt><dd>${plain(article.author)}<small>${plain(article.role)}</small></dd></div>
+          <div><dt>Filed</dt><dd>${article.date}</dd></div>
+          <div><dt>Reading</dt><dd>${current.readTime}</dd></div>
+          <div><dt>Chapters</dt><dd>${String(sections.length + 1).padStart(2, '0')}</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <article class="art-body">
+      <div class="art-shell art-layout">
+        <!-- the rail: where you are in the piece, and how to leave with something -->
+        <aside class="art-rail" aria-label="In this dispatch">
+          <div class="art-rail-inner">
+            <p class="art-rail-label">In this dispatch</p>
+            <ol class="art-toc">${toc}</ol>
+            <div class="art-rail-share">
+              <p class="art-rail-label">Share</p>
+              <div class="art-share">
+                <button type="button" class="art-share-btn" data-art-copy>Copy link</button>
+                <a class="art-share-btn" href="mailto:?subject=${encodeURIComponent(plain(article.title))}&body=${encodeURIComponent(`Thought of you — ${plain(article.title)}, from the Flavoro Journal.`)}">Email</a>
+              </div>
+            </div>
+            <a class="art-rail-back" href="/pages/blog.html"><span aria-hidden="true">←</span> All dispatches</a>
+          </div>
+        </aside>
+
+        <div class="art-column">
+          <p class="art-dateline"><span aria-hidden="true">✳</span> ${plain(article.eyebrow.split('·')[0].replace(/&amp;/g, '&').trim())} <span aria-hidden="true">·</span> ${article.date}</p>
+
+          <div class="art-opening" id="art-scene">
+            ${lead ? `<p class="art-lead">${lead}</p>` : ''}
+            ${body.map((paragraph) => `<p>${paragraph}</p>`).join('')}
+          </div>
+
+          ${article.dek ? `<p class="art-dek">${article.dek}</p>` : ''}
+          ${later.map((paragraph) => `<p>${paragraph}</p>`).join('')}
+
+          <figure class="art-figure">
+            <img src="${figures.lead.src}" alt="${plain(figures.lead.caption)}" loading="lazy" decoding="async">
+            <figcaption><span aria-hidden="true">Fig. 01</span> ${plain(figures.lead.caption)}</figcaption>
+          </figure>
+
+          ${sections.slice(0, 2).map((entry, i) => chapter(entry, i)).join('')}
+
+          <blockquote class="art-quote">
+            <span class="art-quote-mark" aria-hidden="true">“</span>
+            <p>${plain(article.pullQuote).replace(/[“”]/g, '')}</p>
+            <cite>${plain(article.author)} · ${plain(article.role)}</cite>
+          </blockquote>
+
+          <figure class="art-figure art-figure--wide">
+            <img src="${second}" alt="${secondCaption}" loading="lazy" decoding="async">
+            <figcaption><span aria-hidden="true">Fig. 02</span> ${secondCaption}</figcaption>
+          </figure>
+
+          ${sections.slice(2).map((entry, i) => chapter(entry, i + 2)).join('')}
+
+          <!-- what to take away: the practical half of a feature -->
+          ${(sidebar?.items?.length || article.closeNote) ? `
+          <aside class="art-takeaway" id="art-takeaway" aria-labelledby="art-takeaway-title">
+            <header>
+              <p class="art-takeaway-eyebrow">The short version</p>
+              <h2 class="art-takeaway-title" id="art-takeaway-title">What to take away</h2>
+            </header>
+            ${sidebar?.items?.length ? `<dl class="art-takeaway-list">
+              ${sidebar.items.map(([term, detail]) => `<div><dt>${term}</dt><dd>${detail}</dd></div>`).join('')}
+            </dl>` : ''}
+            ${article.closeNote ? `<p class="art-takeaway-note">${article.closeNote}</p>` : ''}
+          </aside>` : ''}
+
+          <!-- the author -->
+          <footer class="art-author">
+            <div class="art-author-mark" aria-hidden="true">✳</div>
+            <div>
+              <p class="art-author-label">Written by</p>
+              <p class="art-author-name">${plain(article.author)}</p>
+              <p class="art-author-role">${plain(article.role)}</p>
+              <p class="art-author-bio">Writes for the Flavoro Journal on sourcing, fire and the long service. Every dispatch is written from inside the building, after service, with the lights still on.</p>
+            </div>
+          </footer>
+
+          <!-- and the next thing to read -->
+          <nav class="art-next" aria-label="Continue reading">
+            <p class="art-next-label">Continue reading</p>
+            <a class="art-next-link" href="${next.url}">
+              <span class="art-next-meta">${next.category} <span aria-hidden="true">·</span> Volume ${next.volume} <span aria-hidden="true">·</span> ${next.readTime}</span>
+              <span class="art-next-title">${next.title}</span>
+              <span class="art-next-arrow" aria-hidden="true">↗</span>
+            </a>
+          </nav>
+
+          <div class="art-back-row">
+            <a class="art-back" href="/pages/blog.html"><span aria-hidden="true">←</span> All dispatches</a>
           </div>
         </div>
-      </header>
-
-      <div class="article-lead-paragraph">
-        <p class="dropcap-lead">${article.paragraphs[0]}</p>
       </div>
+    </article>
 
-      <figure class="article-featured-figure">
-        <img src="${article.image}" alt="${article.title}">
-        <figcaption><i data-lucide="camera"></i> ${article.caption}</figcaption>
-      </figure>
-
-      <div class="article-body-copy">
-        <p>${article.paragraphs[1]}</p>
-      </div>
-
-      <blockquote class="editorial-pull-quote">
-        <i data-lucide="quote" class="quote-mark"></i>
-        <p>${article.pullQuote}</p>
-        <cite>— ${article.author}, ${article.role}</cite>
-      </blockquote>
-
-      <div class="article-body-copy">
-        ${article.paragraphs.slice(2).map(p => `<p>${p}</p>`).join('')}
-      </div>
-
-      <div class="article-author-bio-box">
-        <div class="bio-inner">
-          <div class="bio-icon"><i data-lucide="award"></i></div>
-          <div class="bio-content">
-            <h4>About the Author: ${article.author}</h4>
-            <p>${article.role} at Flavoro. Dedicated to advancing regenerative agricultural sourcing, live-fire culinary heritage, and thoughtful hospitality across Northern California.</p>
-          </div>
+    <!-- the other three, so a single article is never a dead end -->
+    <section class="art-more" aria-labelledby="art-more-title">
+      <div class="art-shell">
+        <header class="art-more-head">
+          <h2 class="art-more-title" id="art-more-title">Also in this issue</h2>
+          <a class="art-more-all" href="/pages/blog.html">See the whole issue <span aria-hidden="true">↗</span></a>
+        </header>
+        <div class="art-more-grid">
+          ${others.map((post) => `
+          <a class="art-more-card" href="${post.url}">
+            <span class="art-more-media"><img src="${post.image}" alt="" loading="lazy" decoding="async"></span>
+            <span class="art-more-cat">${post.category}</span>
+            <span class="art-more-name">${post.title}</span>
+            <span class="art-more-meta">${post.readTime}</span>
+          </a>`).join('')}
         </div>
       </div>
+    </section>
 
-      ${article.nextKey ? `
-      <div class="article-next-card">
-        <span class="next-label">CONTINUE READING THE DISPATCHES</span>
-        <div class="next-card-inner">
-          <div>
-            <small>NEXT ESSAY</small>
-            <h3>${article.nextTitle}</h3>
-          </div>
-          <a href="/pages/${article.nextKey}.html" class="button button-outline">
-            <span>Read Next</span> <i data-lucide="arrow-right"></i>
-          </a>
-        </div>
-      </div>` : ''}
-
-      <div class="article-bottom-actions">
-        <a class="button button-outline" href="/pages/blog.html">
-          <i data-lucide="arrow-left"></i> <span>Browse All Dispatches</span>
-        </a>
+    <section class="art-close-banner">
+      <img src="/images/restaurant-interior.jpg" alt="The Flavoro dining room, lit for evening service" loading="lazy" decoding="async">
+      <div class="art-shell art-close-inner">
+        <p class="art-close-kicker">Savor the dispatch in person</p>
+        <h2 class="art-close-title">Experience <em>the hearth.</em></h2>
+        <p class="art-close-copy">Reserve a table for this evening and taste the season’s harvest over white oak embers.</p>
+        <a class="art-close-cta" href="/pages/reservations.html">Reserve a table <span aria-hidden="true">↗</span></a>
       </div>
-    </div>
-  </article>
-
-  <section class="reservation-banner">
-    <img src="/images/restaurant-interior.jpg" alt="Dining Room">
-    <div class="container">
-      <span class="eyebrow">SAVOR THE DISPATCH IN PERSON</span>
-      <h2>Experience the hearth.</h2>
-      <p>Reserve a table for this evening and taste the season's harvest over white oak embers.</p>
-      <a class="button button-primary" href="/pages/reservations.html">
-        <span>Reserve a table</span> <i data-lucide="calendar-days"></i>
-      </a>
-    </div>
-  </section>${closePage()}`
+    </section>
+  </main>${footer()}`
 }
 function infoPage(kind) {
  const content = {
@@ -2120,12 +2170,44 @@ function infoPage(kind) {
 }
 
 function notFound() {
- return `<main id="main-content" class="error-404">
-   <h1 class="sr-only">Page not found</h1>
-   <img class="error-404-art" src="/images/404-chef.jpg" alt="A disappointed cartoon dog chef standing beside a burnt meal">
-   <div class="error-404-code" aria-label="404 error"><strong>404</strong><span>ERROR</span></div>
-   <div class="error-404-bubble"><p>Oooops!<br>Something<br>went wrong</p><a href="/index.html">Back to home <i data-lucide="arrow-right"></i></a></div>
- </main>`
+  // A dead link is still the restaurant's front door, so this is an editorial
+  // "off the menu" page in the same language as the Journal — not a cartoon.
+  const suggestions = [
+    ['The menu', 'What is cooking this week', '/pages/menu.html'],
+    ['Book a table', 'Find a seat in the room', '/pages/reservations.html'],
+    ['The Journal', 'Long-form writing from the house', '/pages/blog.html'],
+    ['Find us', 'The last two hundred metres', '/pages/contact.html'],
+  ]
+  return `${header('')}
+  <main id="main-content" class="nf">
+    <div class="nf-shell">
+      <div class="nf-head">
+        <span class="nf-code" aria-hidden="true">404</span>
+        <p class="nf-kicker">Off the menu</p>
+        <h1 class="nf-title">This page has<br><em>left the room.</em></h1>
+        <p class="nf-note">The link is broken, the dish is off the carte, or the address was mistyped by a hand that had been holding a glass. Nothing here is lost for good — the kitchen is still open.</p>
+        <a class="nf-home" href="/index.html">Back to the dining room <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+
+        <dl class="nf-facts">
+          <div><dt>Open</dt><dd>Wednesday to Sunday<br>from 4:30 PM</dd></div>
+          <div><dt>Find us</dt><dd>${HOUSE.street}<br>${HOUSE.city}</dd></div>
+          <div><dt>Tonight</dt><dd>Seatings from 5:30<br>Bar until late</dd></div>
+        </dl>
+      </div>
+
+      <nav class="nf-doors" aria-label="Where to go next">
+        ${suggestions.map(([name, note, href], index) => `
+        <a class="nf-door" href="${href}">
+          <span class="nf-door-index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+          <span class="nf-door-body">
+            <span class="nf-door-name">${name}</span>
+            <span class="nf-door-note">${note}</span>
+          </span>
+          <span class="nf-door-arrow" aria-hidden="true">↗</span>
+        </a>`).join('')}
+      </nav>
+    </div>
+  </main>${closePage()}`
 }
 
 function auth(type) {
@@ -2134,6 +2216,13 @@ function auth(type) {
 }
 
 export function renderPage(page) {
+ // A dispatch published from the studio has no HTML shell of its own: the
+ // blog links to it, and the router hands any `journal-*` key to the article
+ // renderer. Static slugs win, so the shipped eight are never shadowed.
+ if (String(page).startsWith('journal-') && !articles[page]) {
+  return journalArticle(page)
+ }
+
  function reservationStatusPage() {
   return `${pageHero('Reservation status · Local prototype', 'Your table,<br><em>at a glance.</em>', 'Review, modify, repeat or cancel a booking stored in this browser. Nothing here is connected to a live restaurant system.', img.interior, 'Reservations')}
   <section class="section-pad rsv-status-section"><div class="container narrow"><div id="reservation-status-root"></div></div></section>${closePage()}`
