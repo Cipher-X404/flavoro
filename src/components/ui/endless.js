@@ -1,18 +1,20 @@
 import { gsap } from 'gsap'
 
+// Local only. These previously alternated with six images hosted on
+// cdn.21st.dev, all of which now 404 — half the corridor was empty planes.
 export const ENDLESS_IMAGE_URLS = [
-  'https://cdn.21st.dev/assets/mirror/49/496b84975083e207d6b9adf6898f417d9e66250a5fa0b324db7d69c24081e665.webp',
   '/images/hero-pasta.jpg',
-  'https://cdn.21st.dev/assets/mirror/37/37149990d5ddbf0ad349dcffff6917efb95d450ff176bc7b911420a8bbce968d.webp',
   '/images/restaurant-interior.jpg',
-  'https://cdn.21st.dev/assets/mirror/95/9579da7038028c3ef96b8cca6a887ddb406851f37caa13a85627ce72975f16f0.webp',
   '/images/cocktails.jpg',
-  'https://cdn.21st.dev/assets/mirror/d0/d0c716fa9bb2a2cbf7dda8f41ffdcda0aa12a5c1db1951ed093935e51377bdb0.webp',
   '/images/private-dining.jpg',
-  'https://cdn.21st.dev/assets/mirror/94/9409bb00df0c1bbb30e4e782f33b06232f39f39c9a5c4cf3e830853316be6e77.webp',
   '/images/chef-team.jpg',
-  'https://cdn.21st.dev/assets/mirror/1f/1f2db3e1105e8a09b30a319647a614bfc0a6858e56a54e6a156ff0eeeb0984a7.webp',
   '/images/dessert.jpg',
+  '/images/editorial/hearth-coals.jpg',
+  '/images/editorial/dining-room.jpg',
+  '/images/market-fish.jpg',
+  '/images/editorial/bartender.jpg',
+  '/images/garden-salad.jpg',
+  '/images/breakfast.jpg',
 ]
 
 const TOTAL = ENDLESS_IMAGE_URLS.length
@@ -52,7 +54,7 @@ export function renderEndlessSection(options = {}) {
   const planesHtml = ENDLESS_IMAGE_URLS.map(
     (url, index) => `
       <div class="endless-plane" data-index="${index}">
-        <img src="${url}" alt="Flavoro atmosphere visual ${index + 1}" loading="eager" decoding="async">
+        <img src="${url}" alt="Flavoro atmosphere visual ${index + 1}" loading="lazy" decoding="async">
       </div>
     `
   ).join('')
