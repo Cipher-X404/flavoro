@@ -268,7 +268,8 @@ export function duplicatePost(id) {
     updatedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
   }
-  all.published = all.published.filter((entry) => entry && entry.id !== id)
+  // The original stays exactly where it was. (This line used to delete it,
+  // which made "Duplicate" quietly unpublish the piece you had just copied.)
   all.drafts = [copy, ...all.drafts]
   write(all)
   return { ok: true, post: copy }
