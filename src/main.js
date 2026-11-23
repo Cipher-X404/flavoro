@@ -12,6 +12,7 @@ import { renderPage } from './pages.js'
 import { applyLocalSettings, showLocalUpdate } from './site-updates.js'
 import { initEndlessCorridor } from './components/ui/endless.js'
 import { initTeamLanyardRail } from './components/ui/team-lanyard-rail.js'
+import { initRoadMapGallery } from './components/ui/road-map-gallery.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -22,16 +23,22 @@ let teardownEndless
 let teardownHome
 let teardownHomeHero
 let teardownContact
+let teardownMaps
 let teardownJournal
 
 function initialize() {
   const page = document.body.dataset.page || 'home'
+  // Dispatches published from the studio share one shell (`dispatch.html`)
+  // and carry their slug in the query string, because their content lives in
+  // the browser rather than in a file built at deploy time.
+  const requestedSlug = page === 'dispatch' ? new URLSearchParams(location.search).get('slug') : null
   if (!document.querySelector('.page-wipe')) {
     // A hidden-by-default sheet used for the page-to-page hand-off. It is
     // clipped to nothing in CSS, so it can never tint the first paint.
     document.body.insertAdjacentHTML('afterbegin', `<div class="page-wipe" aria-hidden="true"></div>`)
   }
-  document.querySelector('#app').innerHTML = renderPage(page)
+  const resolvedPage = page === 'dispatch' ? `journal-${requestedSlug || ''}` : page
+  document.querySelector('#app').innerHTML = renderPage(resolvedPage)
   if (page === 'home') applyLocalSettings()
   document.querySelectorAll('img:not(.hero-bg):not(.page-hero-bg):not([data-eager])').forEach(image => {
     image.loading = 'lazy'
@@ -42,10 +49,9 @@ function initialize() {
   const heroVideo = document.querySelector('video.hero-bg')
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const videoToggle = document.querySelector('[data-video-toggle]')
+  let unlockVideo = () => {}
   if (heroVideo) {
     heroVideo.muted = true
-    if (reduceMotion) heroVideo.pause()
-    else heroVideo.play().catch(() => {})
     const syncVideoControl = () => {
       if (!videoToggle) return
       const paused = heroVideo.paused
@@ -53,10 +59,25 @@ function initialize() {
       videoToggle.setAttribute('aria-label', paused ? 'Play background video' : 'Pause background video')
       videoToggle.setAttribute('aria-pressed', String(paused))
     }
+    const startVideo = () => { if (!reduceMotion && heroVideo.paused) heroVideo.play().catch(() => {}) }
     heroVideo.addEventListener('play', syncVideoControl)
     heroVideo.addEventListener('pause', syncVideoControl)
     videoToggle?.addEventListener('click', () => { if (heroVideo.paused) heroVideo.play().catch(() => {}); else heroVideo.pause() })
     syncVideoControl()
+    // The film is 2.9 MB and it is decoration, so it does not compete with
+    // the first paint: wait for the page to go idle, then let it stream.
+    // Until then the poster carries the frame — which is what was already
+    // on screen for the first second anyway.
+    const idle = window.requestIdleCallback || ((fn) => window.setTimeout(fn, 900))
+    idle(() => {
+      heroVideo.preload = 'auto'
+      if (!reduceMotion) startVideo()
+      else heroVideo.pause()
+    }, { timeout: 2500 })
+    unlockVideo = () => {
+      heroVideo.preload = 'auto'
+      if (!reduceMotion) startVideo()
+    }
   }
 
   teardownSmoothScroll = initSmoothScroll({ Lenis, gsap, ScrollTrigger })
@@ -73,7 +94,7 @@ function initialize() {
       onReveal: () => {
         teardownAnimations?.playHero?.()
         teardownHome?.playHero?.()
-        if (!reduceMotion && !heroVideo?.paused) heroVideo?.play()?.catch?.(() => {})
+        unlockVideo()
       },
       onComplete: () => {
         ScrollTrigger.refresh()
@@ -230,11 +251,12 @@ function initialize() {
     import('./menu-features.js').then(({ initMenuFeatures }) => initMenuFeatures())
   } else if (page === 'reservations') {
     import('./reservation-features.js').then(({ initReservationFeatures }) => initReservationFeatures())
-  } else if (page === 'blog' || page.startsWith('journal-')) {
+  } else if (page === 'blog' || page.startsWith('journal-') || page === 'dispatch') {
     import('./journal-page.js').then(({ initJournalPage }) => { teardownJournal = initJournalPage() })
   } else if (page === 'contact') {
     import('./editorial-features.js').then(({ initEditorialFeatures }) => initEditorialFeatures())
     import('./contact-page.js').then(({ initContactPage }) => { teardownContact = initContactPage() })
+    teardownMaps = initRoadMapGallery()
   } else if (page === 'about') {
     import('./editorial-features.js').then(({ initEditorialFeatures }) => initEditorialFeatures())
     initTeamLanyardRail()
@@ -253,6 +275,8 @@ if (import.meta.hot) import.meta.hot.dispose(() => {
   teardownHome?.()
   teardownHomeHero?.()
   teardownContact?.()
+  teardownMaps?.()
+  teardownMaps = undefined
   teardownJournal?.()
   teardownPreloader?.destroy?.()
   teardownAnimations?.()

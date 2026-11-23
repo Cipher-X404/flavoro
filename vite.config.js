@@ -15,6 +15,7 @@ export default defineConfig({
         gallery: resolve(import.meta.dirname, 'pages/gallery.html'),
         reservations: resolve(import.meta.dirname, 'pages/reservations.html'),
         blog: resolve(import.meta.dirname, 'pages/blog.html'),
+        dispatch: resolve(import.meta.dirname, 'pages/dispatch.html'),
         contact: resolve(import.meta.dirname, 'pages/contact.html'),
         login: resolve(import.meta.dirname, 'pages/login.html'),
         signup: resolve(import.meta.dirname, 'pages/signup.html'),

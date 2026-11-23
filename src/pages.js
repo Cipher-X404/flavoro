@@ -1,6 +1,8 @@
 import { closePage, dishCard, footer, header, pageHero, sectionHead } from './components/site.js'
 import { articles, JOURNAL_ORDER, JOURNAL_SECTIONS } from './data/journal.js'
+import { getPublishedPosts } from './data/journal-store.js'
 import { renderEndlessSection } from './components/ui/endless.js'
+import { renderRoadMapGallery } from './components/ui/road-map-gallery.js'
 import { renderTeamLanyardRail } from './components/ui/team-lanyard-rail.js'
 
 import {
@@ -45,7 +47,6 @@ const spiceRain = () =>
 
 const img = {
   hero: '/images/hero-pasta.jpg',
-  heroVideo: '/video/flavo.mp4',
   interior: '/images/restaurant-interior.jpg',
   chefs: '/images/chef-team.jpg',
   dessert: '/images/dessert.jpg',
@@ -89,8 +90,9 @@ function home() {
 
   <!-- 01 · THE HEARTH — film, no frame -->
   <section class="hm-scene hm-scene--hero hm-hero home-hero" id="hm-hearth" aria-labelledby="hm-hero-title" data-hm-open="${hero.open ? 'open' : 'closed'}">
-    <video class="hero-bg" loop muted playsinline webkit-playsinline preload="metadata" poster="${img.hero}">
-      <source src="${img.heroVideo}" type="video/mp4">
+    <video class="hero-bg" loop muted playsinline webkit-playsinline preload="none" poster="/images/hero-film-poster.jpg" data-hero-video>
+      <source src="/video/flavo-854.mp4" type="video/mp4" media="(max-width: 760px)">
+      <source src="/video/flavo-1280.mp4" type="video/mp4">
     </video>
     <span class="hm-hero-scrim" aria-hidden="true"></span>
     <span class="hm-hero-grain" aria-hidden="true"></span>
@@ -1066,18 +1068,18 @@ function blog() {
           <div class="jrn-cover-lead">
             <p class="jrn-cover-eyebrow">
               <span class="jrn-cover-flag">New</span>
-              ${lead.category} <span class="jrn-dot" aria-hidden="true">·</span> Volume ${lead.volume}
+              ${lead.category}${lead.volume ? ` <span class="jrn-dot" aria-hidden="true">·</span> Volume ${lead.volume}` : ''}
             </p>
             <h1 class="jrn-cover-title" id="jrn-title">${lead.title}</h1>
-            <p class="jrn-cover-dek">${lead.dek || lead.subtitle}</p>
+            ${(lead.dek || lead.subtitle || lead.standfirst) ? `<p class="jrn-cover-dek">${lead.dek || lead.subtitle || lead.standfirst}</p>` : ''}
             <div class="jrn-cover-foot">
               <a class="jrn-cover-cta" href="${lead.url}">
                 <span>Read the dispatch</span>
                 <span class="jrn-cover-cta-ico" aria-hidden="true">↗</span>
               </a>
               <p class="jrn-cover-byline">
-                <span>${lead.author}</span>
-                <span>${lead.role}</span>
+                <span>${lead.author || 'The Flavoro Journal'}</span>
+                ${lead.role ? `<span>${lead.role}</span>` : ''}
                 <span>${lead.date}</span>
                 <span>${lead.readTime}</span>
               </p>
@@ -1085,7 +1087,7 @@ function blog() {
           </div>
 
           <aside class="jrn-cover-aside" aria-label="About this issue">
-            <p class="jrn-cover-note">Eight long-form dispatches from the kitchen, the cellar and the dining room. No listicles, no recipes you will never cook — just the long way round a subject, written by the people who were there.</p>
+            <p class="jrn-cover-note">${wordCount(issue.length)} long-form dispatches from the kitchen, the cellar and the dining room. No listicles, no recipes you will never cook — just the long way round a subject, written by the people who were there.</p>
             <dl class="jrn-cover-stats">
               <div><dt>Dispatches</dt><dd>${String(issue.length).padStart(2, '0')}</dd></div>
               <div><dt>Reading</dt><dd>${totalMinutes}<small>min</small></dd></div>
@@ -1095,7 +1097,7 @@ function blog() {
           </aside>
         </div>
       </div>
-      <p class="jrn-cover-caption" aria-hidden="true">${lead.caption}</p>
+      ${lead.caption ? `<p class="jrn-cover-caption">${lead.caption}</p>` : ''}
     </section>
 
     <!-- 01 · the index: every dispatch, with the shape of the writing visible -->
@@ -1247,62 +1249,11 @@ function contact() {
       <header class="ct-head">
         <span class="ct-num" aria-hidden="true">01</span>
         <h2 class="ct-head-title" id="ct-arrive-title">The last two hundred <em>metres.</em></h2>
-        <p class="ct-head-note">Hayes Valley is small. Everything below is what happens between the corner and the chair.</p>
+        <p class="ct-head-note">Seven junctions ring the block. Pick any one of them and the road leads back to the same lit door.</p>
       </header>
 
-      <div class="ct-arrive-grid">
-        <figure class="ct-plan">
-          <svg viewBox="0 0 460 360" role="img" aria-labelledby="ct-plan-title ct-plan-desc">
-            <title id="ct-plan-title">Walking route to 742 Emberwood Lane</title>
-            <desc id="ct-plan-desc">A plan of the block between Franklin, Fell and Oak Street. A dashed route leads from the Van Ness stop up Oak to the door on the corner of Franklin and Fell, marked with an ember lamp.</desc>
-            <g class="ct-plan-blocks" aria-hidden="true">
-              <rect x="24" y="24" width="112" height="72" />
-              <rect x="24" y="128" width="112" height="72" />
-              <rect x="24" y="232" width="112" height="88" />
-              <rect x="204" y="24" width="120" height="72" />
-              <rect x="204" y="128" width="120" height="72" />
-              <rect x="204" y="232" width="120" height="88" />
-              <rect x="392" y="24" width="48" height="72" />
-              <rect x="392" y="128" width="48" height="72" />
-              <rect x="392" y="232" width="48" height="88" />
-            </g>
-            <g class="ct-plan-streets" aria-hidden="true">
-              <line x1="0" y1="112" x2="460" y2="112" />
-              <line x1="0" y1="216" x2="460" y2="216" />
-              <line x1="170" y1="0" x2="170" y2="360" />
-              <line x1="358" y1="0" x2="358" y2="360" />
-            </g>
-            <g class="ct-plan-labels" aria-hidden="true">
-              <text x="216" y="107" class="ct-plan-label">FELL STREET</text>
-              <text x="216" y="211" class="ct-plan-label">OAK STREET</text>
-              <text x="0" y="0" class="ct-plan-label" transform="translate(164 300) rotate(-90)">FRANKLIN STREET</text>
-            </g>
-            <path class="ct-plan-route" d="M52 344 L52 216 L170 216 L170 128"
-              pathLength="1" fill="none" aria-hidden="true" />
-            <circle class="ct-plan-start" cx="52" cy="344" r="3.5" aria-hidden="true" />
-            <g class="ct-plan-pin" aria-hidden="true">
-              <circle class="ct-plan-halo" cx="170" cy="112" r="20" />
-              <circle class="ct-plan-dot" cx="170" cy="112" r="5" />
-            </g>
-            <text class="ct-plan-door" x="184" y="104" aria-hidden="true">742</text>
-          </svg>
-          <figcaption class="ct-plan-caption">
-            <span>Eight minutes from the Van Ness stop.</span>
-            <a href="${HOUSE.mapsHref}" target="_blank" rel="noopener noreferrer">Open in maps <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
-          </figcaption>
-        </figure>
-
-        <ol class="ct-route">
-          ${ROUTE.map((step) => `
-          <li class="ct-route-step">
-            <span class="ct-route-index" aria-hidden="true">${step.index}</span>
-            <div class="ct-route-body">
-              <h3>${step.title}</h3>
-              <p>${step.copy}</p>
-              <span class="ct-route-meta">${step.meta}</span>
-            </div>
-          </li>`).join('')}
-        </ol>
+      <div class="ct-arrive-grid ct-arrive-grid--map">
+        ${renderRoadMapGallery()}
       </div>
 
       <ul class="ct-chips">
@@ -1855,13 +1806,64 @@ const ROMAN = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8 }
 
 const plain = (value) => String(value).replace(/&amp;/g, '&').replace(/<[^>]+>/g, '')
 
+/* Written in the studio and published from the admin. Kept out of the static
+   module so an edit here can never damage the shipped issue, and merged into
+   the same list so everything downstream treats them identically. */
+/* 1 → one, 8 → eight, 9 → nine. The issue copy counts itself. */
+const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+function wordCount(n) {
+  const word = NUMBER_WORDS[n] || String(n)
+  return word.charAt(0).toUpperCase() + word.slice(1)
+}
+
+function studioArticles() {
+  const out = {}
+  for (const post of getPublishedPosts()) {
+    if (!post?.slug) continue
+    // Every field the cover and the article templates interpolate is coerced
+    // to a string here. A studio post is allowed to omit the dek, the role,
+    // the caption — a template literal would otherwise print "undefined".
+    const str = (value) => (typeof value === 'string' ? value : '')
+    out[`journal-${post.slug}`] = {
+      ...post,
+      title: str(post.title) || 'Untitled dispatch',
+      // The article renderer parses `eyebrow` for its category and volume.
+      eyebrow: str(post.eyebrow) || 'THE JOURNAL',
+      subtitle: str(post.subtitle),
+      dek: str(post.dek),
+      standfirst: str(post.standfirst),
+      author: str(post.author) || 'The Flavoro Journal',
+      role: str(post.role),
+      date: str(post.date),
+      caption: str(post.caption),
+      pullQuote: str(post.pullQuote),
+      closeNote: str(post.closeNote),
+      sidebar: post.sidebar?.items?.length
+        ? { title: post.sidebar.title || 'The particulars', items: post.sidebar.items }
+        : undefined,
+      nextKey: '',
+      nextTitle: '',
+      studio: true,
+    }
+  }
+  return out
+}
+
 function journalIssue() {
-  return JOURNAL_ORDER.filter((slug) => articles[slug]).map((slug, index) => {
-    const article = articles[slug]
-    const [category = '', volume = ''] = article.eyebrow
+  const live = studioArticles()
+  // Studio posts lead the issue, newest first; the shipped eight follow in
+  // their own order. A post with no sections still renders — the article
+  // page already guards the chapter and contents blocks.
+  const order = [...Object.keys(live), ...JOURNAL_ORDER.filter((slug) => articles[slug])]
+  return order.map((slug, index) => {
+    const article = live[slug] || articles[slug]
+    const [category = '', , volumePart = ''] = article.eyebrow
       .replace(/&amp;/g, '&')
       .split('·')
       .map((part) => part.trim())
+    // Shipped entries store "VOL. I" whole; the studio stores the same string.
+    // The cover renders "Volume VOL. IX" otherwise.
+    const volume = volumePart.replace(/^vol\.?\s*/i, '')
     const plainTitle = plain(article.title)
     const words = [
       ...(article.paragraphs || []),
@@ -1878,7 +1880,11 @@ function journalIssue() {
     return {
       slug,
       index,
-      url: `/pages/${slug}.html`,
+      // A studio dispatch has no dedicated file on disk, so it is addressed
+      // through the shared shell instead.
+      url: article.studio
+        ? `/pages/dispatch.html?slug=${encodeURIComponent(String(article.slug || slug).replace(/^journal-/, ''))}`
+        : `/pages/${slug}.html`,
       title: plainTitle,
       short: plainTitle.split(':')[0],
       category: titleCase(category),
@@ -1896,6 +1902,7 @@ function journalIssue() {
       minutes,
       words,
       chapters: (article.sections || []).length + 1,
+      studio: Boolean(article.studio),
     }
   })
 }
@@ -1975,11 +1982,12 @@ function journalShelf(issue) {
    they take one thing away, and they find the next thing to read.
    ------------------------------------------------------------------------- */
 function journalArticle(key) {
-  const article = articles[key] || articles['journal-embers']
+  const article = studioArticles()[key] || articles[key] || articles['journal-embers']
   const issue = journalIssue()
   const index = issue.findIndex((post) => post.slug === key)
   const current = issue[index >= 0 ? index : 0]
-  const next = issue[(issue.findIndex((post) => post.slug === (article.nextKey || '')) + issue.length) % issue.length] || current
+  const nextKeyWanted = article.nextKey || issue[(index + 1) % Math.max(1, issue.length)]?.slug
+  const next = issue[(issue.findIndex((post) => post.slug === nextKeyWanted) + issue.length) % Math.max(1, issue.length)] || current
   const others = issue.filter((post) => post.slug !== current.slug).slice(0, 3)
   const paragraphs = article.paragraphs || []
   const sections = article.sections || []
@@ -2002,7 +2010,7 @@ function journalArticle(key) {
       ${entry.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('')}
     </section>`
 
-  const toc = [sections.length ? 'The scene' : null, ...sections.map((entry) => entry.heading), 'What to take away']
+  const toc = [sections.length ? 'The scene' : null, ...sections.map((entry) => entry.heading), (sidebar?.items?.length || article.closeNote) ? 'What to take away' : null]
     .filter(Boolean)
     .map((label, i) => `<li><a href="#art-${i === 0 ? 'scene' : i === sections.length + 1 || !sections.length ? 'takeaway' : `ch-${i}`}"><span>${String(i + 1).padStart(2, '0')}</span>${label}</a></li>`)
     .join('')
@@ -2080,16 +2088,17 @@ function journalArticle(key) {
           ${sections.slice(2).map((entry, i) => chapter(entry, i + 2)).join('')}
 
           <!-- what to take away: the practical half of a feature -->
+          ${(sidebar?.items?.length || article.closeNote) ? `
           <aside class="art-takeaway" id="art-takeaway" aria-labelledby="art-takeaway-title">
             <header>
               <p class="art-takeaway-eyebrow">The short version</p>
               <h2 class="art-takeaway-title" id="art-takeaway-title">What to take away</h2>
             </header>
-            <dl class="art-takeaway-list">
-              ${(sidebar?.items || []).map(([term, detail]) => `<div><dt>${term}</dt><dd>${detail}</dd></div>`).join('')}
-            </dl>
+            ${sidebar?.items?.length ? `<dl class="art-takeaway-list">
+              ${sidebar.items.map(([term, detail]) => `<div><dt>${term}</dt><dd>${detail}</dd></div>`).join('')}
+            </dl>` : ''}
             ${article.closeNote ? `<p class="art-takeaway-note">${article.closeNote}</p>` : ''}
-          </aside>
+          </aside>` : ''}
 
           <!-- the author -->
           <footer class="art-author">
@@ -2124,7 +2133,7 @@ function journalArticle(key) {
       <div class="art-shell">
         <header class="art-more-head">
           <h2 class="art-more-title" id="art-more-title">Also in this issue</h2>
-          <a class="art-more-all" href="/pages/blog.html">See all eight <span aria-hidden="true">↗</span></a>
+          <a class="art-more-all" href="/pages/blog.html">See the whole issue <span aria-hidden="true">↗</span></a>
         </header>
         <div class="art-more-grid">
           ${others.map((post) => `
@@ -2175,6 +2184,13 @@ function auth(type) {
 }
 
 export function renderPage(page) {
+ // A dispatch published from the studio has no HTML shell of its own: the
+ // blog links to it, and the router hands any `journal-*` key to the article
+ // renderer. Static slugs win, so the shipped eight are never shadowed.
+ if (String(page).startsWith('journal-') && !articles[page]) {
+  return journalArticle(page)
+ }
+
  function reservationStatusPage() {
   return `${pageHero('Reservation status · Local prototype', 'Your table,<br><em>at a glance.</em>', 'Review, modify, repeat or cancel a booking stored in this browser. Nothing here is connected to a live restaurant system.', img.interior, 'Reservations')}
   <section class="section-pad rsv-status-section"><div class="container narrow"><div id="reservation-status-root"></div></div></section>${closePage()}`

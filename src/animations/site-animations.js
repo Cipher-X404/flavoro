@@ -3,10 +3,27 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
   const page = document.body.dataset.page || 'home'
   const header = document.querySelector('[data-header]')
   if (header) {
-    const setHeader = () => header.classList.toggle('is-scrolled', window.scrollY > 40)
-    setHeader()
-    window.addEventListener('scroll', setHeader, { passive: true })
-    cleanups.push(() => window.removeEventListener('scroll', setHeader))
+    // Toggling a class only when the state actually flips keeps this off the
+    // style-recalc path on every scroll frame. It is also coalesced into a
+    // rAF, because `scroll` can fire several times before the next paint.
+    let scrolled = null
+    let queued = false
+    const applyHeader = () => {
+      queued = false
+      const next = window.scrollY > 40
+      if (next === scrolled) return
+      scrolled = next
+      header.classList.toggle('is-scrolled', next)
+    }
+    const onScroll = () => {
+      if (queued) return
+      queued = true
+      requestAnimationFrame(applyHeader)
+    }
+    scrolled = null
+    applyHeader()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    cleanups.push(() => window.removeEventListener('scroll', onScroll))
   }
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -64,16 +81,24 @@ export function initSiteAnimations({ gsap, ScrollTrigger, autoPlayHero = true } 
   document.body.append(cursor)
   const xTo = gsap.quickTo(cursor, 'x', { duration: .25, ease: 'power3' })
   const yTo = gsap.quickTo(cursor, 'y', { duration: .25, ease: 'power3' })
-  const mouseMove = (e) => { xTo(e.clientX); yTo(e.clientY); cursor.classList.add('visible') }
-  window.addEventListener('mousemove', mouseMove)
-  document.querySelectorAll('a, button, input, select, textarea').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('hovering'))
-    el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'))
-  })
+  let cursorVisible = false
+  const mouseMove = (e) => {
+    xTo(e.clientX); yTo(e.clientY)
+    if (!cursorVisible) { cursorVisible = true; cursor.classList.add('visible') }
+  }
+  window.addEventListener('mousemove', mouseMove, { passive: true })
+  // One delegated listener, not one per control: the journal index alone has
+  // several hundred focusable nodes, and this used to bind to all of them.
+  const overControl = (e) => {
+    const control = e.target instanceof Element ? e.target.closest('a, button, input, select, textarea') : null
+    cursor.classList.toggle('hovering', Boolean(control))
+  }
+  document.addEventListener('pointerover', overControl, { passive: true })
 
   const cleanup = () => {
     cleanups.forEach(fn => fn())
     window.removeEventListener('mousemove', mouseMove)
+    document.removeEventListener('pointerover', overControl)
     cursor.remove()
     ScrollTrigger.getAll().forEach(trigger => trigger.kill())
   }
