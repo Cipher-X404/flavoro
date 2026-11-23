@@ -27,6 +27,8 @@ let teardownJournal
 function initialize() {
   const page = document.body.dataset.page || 'home'
   if (!document.querySelector('.page-wipe')) {
+    // A hidden-by-default sheet used for the page-to-page hand-off. It is
+    // clipped to nothing in CSS, so it can never tint the first paint.
     document.body.insertAdjacentHTML('afterbegin', `<div class="page-wipe" aria-hidden="true"></div>`)
   }
   document.querySelector('#app').innerHTML = renderPage(page)
@@ -114,13 +116,24 @@ function initialize() {
 
   const menu = document.querySelector('[data-mobile-menu]')
   const menuToggle = document.querySelector('[data-menu-toggle]')
+  // The sheet lives inside `.site-header`, which is a fixed, blurred stacking
+  // context — fixed-position children of a backdrop-filtered element get
+  // clamped to the header box. Lifting it to <body> lets it cover the whole
+  // viewport, above every section, on every small screen.
+  if (menu && menu.parentElement !== document.body) document.body.append(menu)
   const toggleMenu = (open) => {
     menu?.classList.toggle('is-open', open)
     document.body.classList.toggle('menu-open', open)
     menuToggle?.setAttribute('aria-expanded', String(open))
-    if (open) menu?.querySelector('[data-menu-close]')?.focus()
-    else menuToggle?.focus()
+    if (open) {
+      menu?.setAttribute('aria-hidden', 'false')
+      menu?.querySelector('[data-menu-close]')?.focus()
+    } else {
+      menu?.setAttribute('aria-hidden', 'true')
+      menuToggle?.focus()
+    }
   }
+  if (menu) menu.setAttribute('aria-hidden', 'true')
   document.querySelector('[data-menu-toggle]')?.addEventListener('click', () => toggleMenu(true))
   document.querySelector('[data-menu-close]')?.addEventListener('click', () => toggleMenu(false))
   menu?.addEventListener('keydown', event => {
@@ -194,7 +207,15 @@ function initialize() {
     const samePageAnchor = url.pathname === window.location.pathname && url.hash
     if (samePageAnchor || url.origin !== window.location.origin || link.target === '_blank' || event.metaKey || event.ctrlKey) return
     event.preventDefault()
-    gsap.to('.page-wipe', { scaleY: 1, transformOrigin: 'bottom', duration: .55, ease: 'power3.inOut', onComplete: () => { window.location.href = url.href } })
+    // Fade the room to the house ink instead of flooding the screen with the
+    // ember colour. The sheet is only ever a hand-off, never a background.
+    gsap.set('.page-wipe', { visibility: 'visible', clipPath: 'inset(100% 0 0 0)' })
+    gsap.to('.page-wipe', {
+      clipPath: 'inset(0 0 0 0)',
+      duration: .5,
+      ease: 'power3.inOut',
+      onComplete: () => { window.location.href = url.href },
+    })
   }))
 
   if (page === 'login' || page === 'signup') import('./user-auth.js').then(({ initUserAuth }) => initUserAuth())
@@ -209,7 +230,7 @@ function initialize() {
     import('./menu-features.js').then(({ initMenuFeatures }) => initMenuFeatures())
   } else if (page === 'reservations') {
     import('./reservation-features.js').then(({ initReservationFeatures }) => initReservationFeatures())
-  } else if (page === 'blog') {
+  } else if (page === 'blog' || page.startsWith('journal-')) {
     import('./journal-page.js').then(({ initJournalPage }) => { teardownJournal = initJournalPage() })
   } else if (page === 'contact') {
     import('./editorial-features.js').then(({ initEditorialFeatures }) => initEditorialFeatures())

@@ -1,11 +1,15 @@
 /**
- * Journal page behaviour — “The Reading Room”.
+ * Journal behaviour.
  *
- * The index is a bookcase: eight cloth spines stand on a shelf and the book
- * above them opens to whichever one is chosen. The spread is a tabpanel, the
- * spines are tabs with roving focus, and every dispatch is *also* linked in the
- * plain chronological index below, so the page reads fine with no JavaScript,
- * no pointer, and no taste for theatre.
+ * Two pages share this module.
+ *
+ * The index is an issue: a cover that belongs to the newest dispatch, a
+ * contents page of every dispatch, a shelf of four strands, and a letter.
+ * Filtering, the strand accordion and the newsletter all work without GSAP.
+ *
+ * A dispatch page is a feature: a sticky table of contents that tracks the
+ * reader's position, a copy-link button, and a gentle drift on the cover
+ * photograph. Everything degrades to a plain, readable article.
  */
 
 import { gsap } from 'gsap'
@@ -23,255 +27,230 @@ const readIssue = () => {
   }
 }
 
-export function initJournalPage() {
-  const cleanups = []
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const listen = (target, type, handler, options) => {
-    if (!target) return
-    target.addEventListener(type, handler, options)
-    cleanups.push(() => target.removeEventListener(type, handler, options))
-  }
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  const posts = readIssue()
-  const spines = [...document.querySelectorAll('.jr-spine')]
-  const spread = document.getElementById('jr-spread')
-  const shelf = document.querySelector('[data-jr-shelf]')
-
-  /* -------------------------------------------------- the book + the shelf */
-
-  if (posts.length && spread && spines.length) {
-    const field = (name) => spread.querySelector(`[data-jr="${name}"]`)
-    const leftMedia = spread.querySelector('.jr-page-media')
-    const rightPage = spread.querySelector('.jr-page--right')
-    const rightBits = spread.querySelectorAll(
-      '.jr-cat, .jr-post-title, .jr-sub, .jr-byline, .jr-read',
-    )
-
-    const paint = (post) => {
-      const set = (name, value) => {
-        const node = field(name)
-        if (node) node.textContent = value
-      }
-      const image = field('image')
-      if (image) {
-        image.setAttribute('src', post.image)
-        image.setAttribute('alt', post.caption)
-      }
-      set('volume', `Volume ${post.volume}`)
-      set('caption', post.caption)
-      set('category', post.category)
-      set('date', post.date)
-      set('title', post.title)
-      set('subtitle', post.subtitle)
-      set('author', post.author)
-      set('role', post.role)
-      set('time', post.readTime)
-      const link = field('link')
-      if (link) link.setAttribute('href', post.url)
-    }
-
-    let current = 0
-
-    const select = (index, { animate = true, focus = false } = {}) => {
-      const post = posts[index]
-      if (!post) return
-      current = index
-      spines.forEach((spine, i) => {
-        const active = i === index
-        spine.setAttribute('aria-selected', String(active))
-        spine.tabIndex = active ? 0 : -1
-      })
-      spread.setAttribute('aria-labelledby', `jr-spine-${index}`)
-      paint(post)
-
-      if (focus) {
-        spines[index].focus({ preventScroll: true })
-      }
-      // Only nudge the shelf when the chosen book is actually out of view.
-      const spine = spines[index]
-      if (shelf && spine && typeof shelf.scrollTo === 'function') {
-        const left = spine.offsetLeft
-        const right = left + spine.offsetWidth
-        if (left < shelf.scrollLeft || right > shelf.scrollLeft + shelf.clientWidth) {
-          shelf.scrollTo({
-            left: Math.max(0, left - 24),
-            behavior: reduce ? 'auto' : 'smooth',
-          })
-        }
-      }
-
-      if (!animate || reduce) return
-      const image = leftMedia?.querySelector('img')
-      if (image) {
-        gsap.fromTo(
-          image,
-          { opacity: 0, scale: 1.06 },
-          { opacity: 1, scale: 1, duration: 0.9, ease: 'power2.out', overwrite: true },
-        )
-      }
-      gsap.fromTo(
-        rightPage,
-        { clipPath: 'inset(0 0 0 100%)' },
-        { clipPath: 'inset(0 0 0 0%)', duration: 0.75, ease: 'power3.inOut', overwrite: true },
-      )
-      gsap.fromTo(
-        rightBits,
-        { y: 12, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.5,
-          stagger: 0.05,
-          delay: 0.16,
-          ease: 'power2.out',
-          overwrite: true,
-        },
-      )
-    }
-
-    const step = (from, delta) => (from + delta + posts.length) % posts.length
-
-    spines.forEach((spine, index) => {
-      listen(spine, 'click', () => select(index))
-      listen(spine, 'keydown', (event) => {
-        const moves = {
-          ArrowRight: () => step(index, 1),
-          ArrowDown: () => step(index, 1),
-          ArrowLeft: () => step(index, -1),
-          ArrowUp: () => step(index, -1),
-          Home: () => 0,
-          End: () => posts.length - 1,
-        }
-        const move = moves[event.key]
-        if (!move) return
-        event.preventDefault()
-        select(move(), { focus: true })
-      })
-    })
-
-    // The spread itself is focusable, so arrows work once focus lands there.
-    listen(spread, 'keydown', (event) => {
-      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return
-      event.preventDefault()
-      const next =
-        event.key === 'ArrowRight'
-          ? step(current, 1)
-          : event.key === 'ArrowLeft'
-            ? step(current, -1)
-            : event.key === 'Home'
-              ? 0
-              : posts.length - 1
-      select(next, { focus: true })
-    })
-
-    select(0, { animate: false })
-
-    if (!reduce) {
-      gsap.fromTo(
-        spread,
-        { y: 34, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: spread, start: 'top 88%', once: true },
-        },
-      )
-      gsap.fromTo(
-        spines,
-        { y: 26, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          stagger: 0.045,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: shelf, start: 'top 92%', once: true },
-        },
-      )
-    }
-  }
-
-  /* ------------------------------------------------------------- the cover */
-
-  const cover = document.querySelector('[data-jr-drift]')
-  if (cover && !reduce) {
-    gsap.to(cover, {
-      yPercent: 9,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: '.jr-hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: true,
-      },
-    })
-  }
-
-  /* ------------------------------------------------------------ the letter */
-
+/* -------------------------------------------------------------------------
+   the letter — shared by the index and, historically, the reading room
+   ------------------------------------------------------------------------- */
+function initLetter(cleanups) {
   const form = document.getElementById('journal-newsletter-form')
-  if (form) {
-    const input = form.querySelector('input[type="email"]')
-    const note = document.querySelector('[data-jr-note]')
-    const button = form.querySelector('.jr-submit')
-    const noteDefault = note ? note.textContent : ''
+  if (!form) return
 
-    listen(form, 'submit', (event) => {
-      event.preventDefault()
-      const email = input ? input.value.trim() : ''
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-        if (note) {
-          note.dataset.state = 'error'
-          note.textContent = 'That address does not look complete — check it and try again.'
-        }
-        input?.focus()
-        return
-      }
-      try {
-        const { already } = subscribeToDispatch(email)
-        if (note) {
-          note.dataset.state = 'ok'
-          note.textContent = already
-            ? 'You are already on the list — the next letter is yours.'
-            : `Done. The next letter goes to ${email}.`
-        }
-        if (button) {
-          const label = button.querySelector('span')
-          if (label) label.textContent = 'On the list'
-          button.disabled = true
-        }
-        form.querySelector('input')?.setAttribute('disabled', 'disabled')
-      } catch {
-        if (note) {
-          note.dataset.state = 'error'
-          note.textContent = 'We could not save that just now. Try again in a moment.'
-        }
-      }
-    })
+  const input = form.querySelector('input[type="email"]')
+  const note = document.querySelector('[data-jr-note]')
+  const button = form.querySelector('.jrn-form-submit, .jr-submit')
+  const noteDefault = note ? note.textContent : ''
+  const listen = (target, type, handler) => {
+    if (!target) return
+    target.addEventListener(type, handler)
+    cleanups.push(() => target.removeEventListener(type, handler))
+  }
 
-    listen(input, 'input', () => {
-      if (note && note.dataset.state === 'error') {
-        note.dataset.state = ''
-        note.textContent = noteDefault
+  listen(form, 'submit', (event) => {
+    event.preventDefault()
+    const email = input ? input.value.trim() : ''
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      if (note) {
+        note.dataset.state = 'error'
+        note.textContent = 'That address does not look complete — check it and try again.'
       }
-    })
-
-    if (input && isSubscribed(input.value)) {
+      input?.focus()
+      return
+    }
+    try {
+      const { already } = subscribeToDispatch(email)
       if (note) {
         note.dataset.state = 'ok'
-        note.textContent = 'You are already on the list — the next letter is yours.'
+        note.textContent = already
+          ? 'You are already on the list — the next letter is yours.'
+          : `Done. The next letter goes to ${email}.`
+      }
+      if (button) {
+        const label = button.querySelector('span')
+        if (label) label.textContent = 'On the list'
+        button.disabled = true
+      }
+      input?.setAttribute('disabled', 'disabled')
+    } catch {
+      if (note) {
+        note.dataset.state = 'error'
+        note.textContent = 'We could not save that just now. Try again in a moment.'
       }
     }
+  })
+
+  listen(input, 'input', () => {
+    if (note && note.dataset.state === 'error') {
+      note.dataset.state = ''
+      note.textContent = noteDefault
+    }
+  })
+
+  if (input && isSubscribed(input.value) && note) {
+    note.dataset.state = 'ok'
+    note.textContent = 'You are already on the list — the next letter is yours.'
+  }
+}
+
+/* -------------------------------------------------------------------------
+   the index
+   ------------------------------------------------------------------------- */
+function initIndex(cleanups) {
+  const listen = (target, type, handler) => {
+    if (!target) return
+    target.addEventListener(type, handler)
+    cleanups.push(() => target.removeEventListener(type, handler))
   }
 
-  /* -------------------------------------------------------------- teardown */
+  /* 01 · filtering by strand. Rows keep their printed order; the empty state
+     only appears if a strand has no dispatches at all. */
+  const filters = [...document.querySelectorAll('[data-jrn-filter]')]
+  const rows = [...document.querySelectorAll('[data-jrn-row]')]
+  const empty = document.querySelector('[data-jrn-empty]')
+
+  if (filters.length && rows.length) {
+    const rowSection = (row) => {
+      const cat = row.querySelector('.jrn-row-cat')?.textContent.trim().toLowerCase() || ''
+      return cat.split(' ')[0]
+    }
+
+    const applyFilter = (value) => {
+      filters.forEach((button) => {
+        const active = button.dataset.jrnFilter === value
+        button.classList.toggle('is-active', active)
+        button.setAttribute('aria-pressed', String(active))
+      })
+      let shown = 0
+      rows.forEach((row) => {
+        const visible = value === 'all' || rowSection(row) === value
+        row.hidden = !visible
+        if (visible) shown += 1
+      })
+      if (empty) empty.hidden = shown > 0
+      // Rows animate in as a short stagger so filtering reads as a movement,
+      // not a page replacement.
+      if (!prefersReducedMotion() && shown) {
+        gsap.fromTo(
+          rows.filter((row) => !row.hidden),
+          { y: 10, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.42, stagger: 0.035, ease: 'power2.out', overwrite: true },
+        )
+      }
+    }
+
+    filters.forEach((button) => {
+      listen(button, 'click', () => applyFilter(button.dataset.jrnFilter || 'all'))
+    })
+  }
+
+  /* 02 · the strands open one at a time, like turning to a section of a book */
+  const strands = [...document.querySelectorAll('[data-jrn-strand]')]
+  strands.forEach((strand) => {
+    const toggle = strand.querySelector('[data-jrn-strand-toggle]')
+    if (!toggle) return
+    listen(toggle, 'click', () => {
+      const open = strand.dataset.jrnOpen === 'true'
+      strands.forEach((other) => {
+        const otherToggle = other.querySelector('[data-jrn-strand-toggle]')
+        if (other === strand) {
+          other.dataset.jrnOpen = String(!open)
+          otherToggle?.setAttribute('aria-expanded', String(!open))
+        } else {
+          other.dataset.jrnOpen = 'false'
+          otherToggle?.setAttribute('aria-expanded', 'false')
+        }
+      })
+    })
+  })
+
+  /* the cover photograph drifts a little as the headline rises */
+  const cover = document.querySelector('[data-jrn-drift]')
+  if (cover && !prefersReducedMotion()) {
+    gsap.to(cover, {
+      yPercent: 8,
+      ease: 'none',
+      scrollTrigger: { trigger: '.jrn-cover', start: 'top top', end: 'bottom top', scrub: true },
+    })
+  }
+}
+
+/* -------------------------------------------------------------------------
+   a dispatch
+   ------------------------------------------------------------------------- */
+function initDispatch(cleanups) {
+  const listen = (target, type, handler) => {
+    if (!target) return
+    target.addEventListener(type, handler)
+    cleanups.push(() => target.removeEventListener(type, handler))
+  }
+
+  const cover = document.querySelector('[data-art-drift]')
+  if (cover && !prefersReducedMotion()) {
+    gsap.to(cover, {
+      yPercent: 7,
+      ease: 'none',
+      scrollTrigger: { trigger: '.art-hero', start: 'top top', end: 'bottom top', scrub: true },
+    })
+  }
+
+  /* the table of contents marks where the reader actually is */
+  const links = [...document.querySelectorAll('.art-toc a')]
+  const targets = links
+    .map((link) => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean)
+
+  if (targets.length && 'IntersectionObserver' in window) {
+    const mark = (id) => {
+      links.forEach((link) => {
+        const active = link.getAttribute('href') === `#${id}`
+        link.classList.toggle('is-current', active)
+        if (active) link.setAttribute('aria-current', 'true')
+        else link.removeAttribute('aria-current')
+      })
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+        if (visible?.target?.id) mark(visible.target.id)
+      },
+      { rootMargin: '-110px 0px -55% 0px', threshold: 0 },
+    )
+    targets.forEach((target) => observer.observe(target))
+    cleanups.push(() => observer.disconnect())
+  }
+
+  /* copy link — the one piece of sharing that needs no third party */
+  const copy = document.querySelector('[data-art-copy]')
+  if (copy) {
+    const label = copy.textContent
+    listen(copy, 'click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        copy.textContent = 'Link copied'
+      } catch {
+        copy.textContent = 'Copy failed'
+      }
+      window.setTimeout(() => { copy.textContent = label }, 2200)
+    })
+  }
+}
+
+export function initJournalPage() {
+  const cleanups = []
+  const page = document.body.dataset.page || ''
+  const isDispatch = page.startsWith('journal-')
+
+  if (isDispatch) initDispatch(cleanups)
+  else initIndex(cleanups)
+
+  initLetter(cleanups)
 
   cleanups.push(() => {
     ScrollTrigger.getAll().forEach((trigger) => {
       const node = trigger.trigger
-      if (node && (node.closest?.('.jr-room') || node.classList?.contains('jr-hero'))) trigger.kill()
+      if (node && (node.closest?.('.jrn') || node.closest?.('.art'))) trigger.kill()
     })
   })
 
